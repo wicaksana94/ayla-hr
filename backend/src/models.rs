@@ -1,107 +1,126 @@
 use serde::{Deserialize, Serialize};
-use chrono::NaiveDate;
+use sqlx::FromRow;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
-    pub id: i64,
+    pub id: i32,
     pub clerk_id: String,
     pub email: String,
     pub name: String,
-    pub role: UserRole,
-    pub department_id: Option<i64>,
-    pub position_id: Option<i64>,
+    pub role: String,
+    pub department_id: Option<i32>,
+    pub position_id: Option<i32>,
     pub language: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub is_active: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum UserRole {
-    Admin,
-    HrManager,
-    Manager,
-    Employee,
-}
-
-impl UserRole {
-    pub fn as_str(&self) -> &str {
-        match self {
-            UserRole::Admin => "admin",
-            UserRole::HrManager => "hr_manager",
-            UserRole::Manager => "manager",
-            UserRole::Employee => "employee",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Department {
-    pub id: i64,
+    pub id: i32,
+    pub name: String,
+    pub code: Option<String>,
+    pub description: Option<String>,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Position {
+    pub id: i32,
+    pub name: String,
+    pub departements: Option<String>, // Typo from user's schema
+    pub level: Option<i32>,
+    pub access_level: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct LeaveType {
+    pub id: i32,
+    pub name: String,
+    pub code: String,
+    pub is_paid: bool,
+    pub annual_limit: i32,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Leave {
+    pub id: i32,
+    pub user_id: Option<i32>,
+    pub leave_type: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub total_days: i32,
+    pub reason: Option<String>,
+    pub status: String,
+    pub approved_by: Option<i32>,
+    pub approved_at: Option<String>,
+}
+
+// Request/Response types
+#[derive(Debug, Deserialize)]
+pub struct CreateEmployeeRequest {
+    pub clerk_id: String,
+    pub email: String,
+    pub name: String,
+    pub role: Option<String>,
+    pub department_id: Option<i32>,
+    pub position_id: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateEmployeeRequest {
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub role: Option<String>,
+    pub department_id: Option<i32>,
+    pub position_id: Option<i32>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDepartmentRequest {
     pub name: String,
     pub code: String,
     pub description: Option<String>,
-    pub is_active: bool,
-    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Position {
-    pub id: i64,
+#[derive(Debug, Deserialize)]
+pub struct UpdateDepartmentRequest {
+    pub name: Option<String>,
+    pub code: Option<String>,
+    pub description: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePositionRequest {
     pub name: String,
-    pub level: i32,
-    pub department_id: i64,
-    pub access_level: AccessLevel,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub department_id: i32,
+    pub level: Option<i32>,
+    pub access_level: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum AccessLevel {
-    Full,
-    ManageTeam,
-    ReadOnly,
-    OwnOnly,
+#[derive(Debug, Deserialize)]
+pub struct UpdatePositionRequest {
+    pub name: Option<String>,
+    pub department_id: Option<i32>,
+    pub level: Option<i32>,
+    pub access_level: Option<String>,
+    pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Leave {
-    pub id: i64,
-    pub user_id: i64,
-    pub leave_type: LeaveType,
-    pub start_date: NaiveDate,
-    pub end_date: NaiveDate,
-    pub total_days: f32,
+#[derive(Debug, Deserialize)]
+pub struct CreateLeaveRequest {
+    pub user_id: i32,
+    pub leave_type: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub total_days: Option<i32>,
     pub reason: Option<String>,
-    pub status: LeaveStatus,
-    pub approved_by: Option<i64>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum LeaveType {
-    Annual,
-    Sick,
-    Paid,
-    Unpaid,
-}
-
-impl LeaveType {
-    pub fn as_str(&self) -> &str {
-        match self {
-            LeaveType::Annual => "annual",
-            LeaveType::Sick => "sick",
-            LeaveType::Paid => "paid",
-            LeaveType::Unpaid => "unpaid",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum LeaveStatus {
-    Pending,
-    Approved,
-    Rejected,
-    Cancelled,
+#[derive(Debug, Deserialize)]
+pub struct UpdateLeaveStatusRequest {
+    pub status: String,
+    pub approved_by: i32,
 }
