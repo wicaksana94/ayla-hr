@@ -56,6 +56,192 @@ pub struct Leave {
     pub approved_at: Option<String>,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_user_model_serialization() {
+        let user = User {
+            id: 1,
+            clerk_id: "test_clerk_123".to_string(),
+            email: "test@example.com".to_string(),
+            name: "Test User".to_string(),
+            role: "employee".to_string(),
+            department_id: Some(1),
+            position_id: Some(1),
+            language: "en".to_string(),
+            is_active: true,
+        };
+        
+        let json = serde_json::to_string(&user).unwrap();
+        assert!(json.contains("test@example.com"));
+    }
+    
+    #[test]
+    fn test_department_model_serialization() {
+        let dept = Department {
+            id: 1,
+            name: "Engineering".to_string(),
+            code: Some("ENG".to_string()),
+            description: Some("Engineering Department".to_string()),
+            is_active: true,
+        };
+        
+        let json = serde_json::to_string(&dept).unwrap();
+        assert!(json.contains("Engineering"));
+    }
+    
+    #[test]
+    fn test_create_employee_request() {
+        let req = CreateEmployeeRequest {
+            clerk_id: "clerk_abc123".to_string(),
+            email: "employee@company.com".to_string(),
+            name: "John Doe".to_string(),
+            role: Some("manager".to_string()),
+            department_id: Some(1),
+            position_id: Some(2),
+        };
+        
+        assert_eq!(req.clerk_id, "clerk_abc123");
+        assert_eq!(req.role, Some("manager".to_string()));
+    }
+    
+    #[test]
+    fn test_create_department_request() {
+        let req = CreateDepartmentRequest {
+            name: "Finance".to_string(),
+            code: "FIN".to_string(),
+            description: Some("Finance Department".to_string()),
+        };
+        
+        assert_eq!(req.name, "Finance");
+        assert_eq!(req.code, "FIN");
+    }
+    
+    #[test]
+    fn test_create_position_request() {
+        let req = CreatePositionRequest {
+            name: "Senior Engineer".to_string(),
+            department_id: 1,
+            level: Some(3),
+            access_level: Some("manage_team".to_string()),
+        };
+        
+        assert_eq!(req.name, "Senior Engineer");
+        assert_eq!(req.level, Some(3));
+    }
+    
+    #[test]
+    fn test_create_leave_request() {
+        let req = CreateLeaveRequest {
+            user_id: 5,
+            leave_type: "sick".to_string(),
+            start_date: "2024-02-01".to_string(),
+            end_date: "2024-02-02".to_string(),
+            total_days: Some(2),
+            reason: Some("Not feeling well".to_string()),
+        };
+        
+        assert_eq!(req.user_id, 5);
+        assert_eq!(req.leave_type, "sick");
+        assert_eq!(req.total_days, Some(2));
+    }
+    
+    #[test]
+    fn test_update_leave_status_request() {
+        let req = UpdateLeaveStatusRequest {
+            status: "approved".to_string(),
+            approved_by: 1,
+        };
+        
+        assert_eq!(req.status, "approved");
+        assert_eq!(req.approved_by, 1);
+    }
+    
+    #[test]
+    fn test_leave_type_model() {
+        let lt = LeaveType {
+            id: 1,
+            name: "Annual Leave".to_string(),
+            code: "annual".to_string(),
+            is_paid: true,
+            annual_limit: 12,
+            is_active: true,
+        };
+        
+        assert!(lt.is_paid);
+        assert_eq!(lt.annual_limit, 12);
+    }
+    
+    #[test]
+    fn test_leave_model() {
+        let leave = Leave {
+            id: 1,
+            user_id: Some(1),
+            leave_type: "annual".to_string(),
+            start_date: "2024-01-01".to_string(),
+            end_date: "2024-01-05".to_string(),
+            total_days: 5,
+            reason: Some("Holiday".to_string()),
+            status: "pending".to_string(),
+            approved_by: None,
+            approved_at: None,
+        };
+        
+        assert_eq!(leave.total_days, 5);
+        assert_eq!(leave.status, "pending");
+    }
+    
+    #[test]
+    fn test_position_model() {
+        let pos = Position {
+            id: 1,
+            name: "Test Position".to_string(),
+            departements: Some("1".to_string()),
+            level: Some(1),
+            access_level: Some("own_only".to_string()),
+        };
+        
+        assert_eq!(pos.name, "Test Position");
+        assert_eq!(pos.level, Some(1));
+    }
+    
+    #[test]
+    fn test_json_serialization_roundtrip_user() {
+        let user = User {
+            id: 1,
+            clerk_id: "test".to_string(),
+            email: "test@test.com".to_string(),
+            name: "Test User".to_string(),
+            role: "employee".to_string(),
+            department_id: None,
+            position_id: None,
+            language: "en".to_string(),
+            is_active: true,
+        };
+        
+        let json = serde_json::to_string(&user).unwrap();
+        let decoded: User = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.email, "test@test.com");
+    }
+    
+    #[test]
+    fn test_json_serialization_roundtrip_department() {
+        let dept = Department {
+            id: 1,
+            name: "Test".to_string(),
+            code: Some("TST".to_string()),
+            description: None,
+            is_active: true,
+        };
+        
+        let json = serde_json::to_string(&dept).unwrap();
+        let decoded: Department = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.name, "Test");
+    }
+}
+
 // Request/Response types
 #[derive(Debug, Deserialize)]
 pub struct CreateEmployeeRequest {
