@@ -10,17 +10,16 @@ export function useSignOut() {
 
   const handleSignOut = useCallback(async () => {
     if (!isLoaded) {
-      // If auth is not loaded yet, just redirect to home
-      router.push('/');
+      window.location.href = '/';
       return;
     }
     
     try {
       await signOut();
-      router.push('/');
+      window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
-      router.push('/');
+      window.location.href = '/';
     }
   }, [signOut, isLoaded, router]);
 
