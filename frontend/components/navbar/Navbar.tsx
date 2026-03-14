@@ -35,7 +35,7 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
   const { user, isLoaded: isUserLoaded } = useUser();
   const { isLoaded: isAuthLoaded } = useAuth();
   const [currentLang, setCurrentLang] = useState('en');
-  const [notifications] = useState(3); // Mock notification count
+  const [notifications] = useState(3);
 
   const handleLanguageChange = (langCode: string) => {
     setCurrentLang(langCode);
@@ -47,16 +47,15 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
-      {/* Mobile Menu Button */}
-      <Button variant="ghost" size="icon" className="md:hidden">
-        <Menu className="h-5 w-5" />
-      </Button>
+      {/* Left side - Mobile menu */}
+      <div className="flex items-center">
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
 
-      {/* Spacer for mobile */}
-      <div className="md:hidden" />
-
-      {/* Right Section */}
-      <div className="flex items-center space-x-2 md:space-x-4">
+      {/* Right side */}
+      <div className="flex items-center space-x-3 md:space-x-4">
         {/* Language Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
