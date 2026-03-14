@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
 import { Role } from "@/config/navigation";
@@ -7,18 +5,12 @@ import { Role } from "@/config/navigation";
 // Default role - in production, this would come from your database
 const DEFAULT_ROLE: Role = 'employee';
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = auth();
-
-  if (!userId) {
-    redirect("/");
-  }
-
-  // TODO: Replace with actual API call to get user role from database
+  // Role is fetched on client side or passed from server
   // For now, use default role
   const userRole: Role = DEFAULT_ROLE;
 
