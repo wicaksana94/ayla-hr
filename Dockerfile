@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:latest-bookworm AS builder
+FROM rust:latest AS builder
 
 WORKDIR /app
 
