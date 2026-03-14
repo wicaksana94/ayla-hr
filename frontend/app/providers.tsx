@@ -7,7 +7,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ClerkProvider
       afterSignInUrl="/dashboard"
       afterSignUpUrl="/dashboard"
-      afterSignOutUrl="/"
     >
       {children}
     </ClerkProvider>

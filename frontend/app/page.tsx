@@ -1,7 +1,8 @@
 'use client';
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
   return (
@@ -17,11 +18,11 @@ export default function Home() {
           </div>
           <div className="flex items-center space-x-4">
             <SignedOut>
-              <SignInButton mode="modal">
+              <Link href="/sign-in">
                 <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
                   Sign In
                 </button>
-              </SignInButton>
+              </Link>
             </SignedOut>
             <SignedIn>
               <UserButton afterSignOutUrl="/" />
@@ -44,18 +45,19 @@ export default function Home() {
           
           <div className="flex items-center justify-center space-x-4">
             <SignedOut>
-              <SignInButton mode="modal">
+              <Link href="/sign-in">
                 <button className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-lg">
                   Get Started
                 </button>
-              </SignInButton>
+              </Link>
             </SignedOut>
-            <Link 
-              href="/dashboard" 
-              className="px-6 py-3 border border-input rounded-md hover:bg-accent text-lg"
-            >
-              Learn More
-            </Link>
+            <SignedIn>
+              <Link href="/dashboard">
+                <button className="px-6 py-3 border border-input rounded-md hover:bg-accent text-lg">
+                  Go to Dashboard
+                </button>
+              </Link>
+            </SignedIn>
           </div>
 
           {/* Features */}
