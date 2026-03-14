@@ -30,7 +30,7 @@ export default function LeavesPage() {
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
 
-  const totalDays = selectedRange.from && selectedRange.to 
+  const totalDays = selectedRange?.from && selectedRange?.to 
     ? differenceInDays(selectedRange.to, selectedRange.from) + 1 
     : 0;
 
@@ -79,8 +79,8 @@ export default function LeavesPage() {
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedRange.from ? (
-                        selectedRange.to ? (
+                      {selectedRange?.from ? (
+                        selectedRange?.to ? (
                           <>
                             {format(selectedRange.from, 'MMM d, yyyy')} -{' '}
                             {format(selectedRange.to, 'MMM d, yyyy')}
