@@ -15,14 +15,11 @@ export default function DashboardLayout({
   const userRole: Role = DEFAULT_ROLE;
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar userRole={userRole} />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+    <div className="min-h-screen">
+      <Sidebar userRole={userRole} />
+      
+      {/* Main Content - with margin to account for fixed sidebar */}
+      <div className="ml-64 transition-all duration-300">
         <Navbar />
         
         {/* Page Content */}

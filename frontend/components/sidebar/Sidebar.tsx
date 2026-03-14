@@ -18,48 +18,55 @@ interface SidebarProps {
   userRole?: Role;
 }
 
+// Translation function
+const getTranslations = (lang: string) => {
+  const trans: Record<string, Record<string, Record<string, string>>> = {
+    en: {
+      common: { dashboard: 'Dashboard', myLeave: 'My Leave', employees: 'Employees', departments: 'Departments', positions: 'Positions', leaveRequests: 'Leave Requests', reports: 'Reports', profile: 'Profile', settings: 'Settings', signOut: 'Sign Out', main: 'Main', hrManagement: 'HR Management', settingsGroup: 'Settings' }
+    },
+    id: {
+      common: { dashboard: 'Dasbor', myLeave: 'Cuti Saya', employees: 'Karyawan', departments: 'Departemen', positions: 'Posisi', leaveRequests: 'Permintaan Cuti', reports: 'Laporan', profile: 'Profil', settings: 'Pengaturan', signOut: 'Keluar', main: 'Utama', hrManagement: 'Manajemen HR', settingsGroup: 'Pengaturan' }
+    },
+    es: {
+      common: { dashboard: 'Panel', myLeave: 'Mi Permiso', employees: 'Empleados', departments: 'Departamentos', positions: 'Posiciones', leaveRequests: 'Solicitudes de Permiso', reports: 'Informes', profile: 'Perfil', settings: 'Configuración', signOut: 'Cerrar Sesión', main: 'Principal', hrManagement: 'Gestión HR', settingsGroup: 'Configuración' }
+    },
+    zh: {
+      common: { dashboard: '仪表板', myLeave: '我的请假', employees: '员工', departments: '部门', positions: '职位', leaveRequests: '请假申请', reports: '报告', profile: '个人资料', settings: '设置', signOut: '退出登录', main: '主要', hrManagement: '人力资源管理', settingsGroup: '设置' }
+    }
+  };
+  return trans[lang as 'en'|'id'|'es'|'zh'] || trans.en;
+};
+
+const getNavName = (name: string): string => {
+  const nameMap: Record<string, string> = {
+    'Dashboard': 'dashboard',
+    'My Leave': 'myLeave',
+    'Employees': 'employees',
+    'Departments': 'departments',
+    'Positions': 'positions',
+    'Leave Requests': 'leaveRequests',
+    'Reports': 'reports',
+    'Profile': 'profile',
+    'Settings': 'settings',
+  };
+  return nameMap[name] || name;
+};
+
+const getGroupTitle = (title: string): string => {
+  const titleMap: Record<string, string> = {
+    'Main': 'main',
+    'HR Management': 'hrManagement',
+    'Settings': 'settingsGroup',
+  };
+  return titleMap[title] || title;
+};
+
 export function Sidebar({ userRole = 'employee' }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const handleSignOut = useSignOut();
   const { language } = useI18n();
-
-  // Map navigation names to translation keys
-  const getNavName = (name: string): string => {
-    const nameMap: Record<string, string> = {
-      'Dashboard': 'common.dashboard',
-      'My Leave': 'common.myLeave',
-      'Employees': 'common.employees',
-      'Departments': 'common.departments',
-      'Positions': 'common.positions',
-      'Leave Requests': 'common.leaveRequests',
-      'Reports': 'common.reports',
-      'Profile': 'common.profile',
-      'Settings': 'common.settings',
-    };
-    return nameMap[name] || name;
-  };
-
-  // Get translated name
-  const t = (key: string): string => {
-    const keys = key.split('.');
-    let value: any = {};
-    const lang = language as 'en' | 'id' | 'es' | 'zh';
-    
-    // Simple translation lookup
-    const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { common: { dashboard: 'Dashboard', myLeave: 'My Leave', employees: 'Employees', departments: 'Departments', positions: 'Positions', leaveRequests: 'Leave Requests', reports: 'Reports', profile: 'Profile', settings: 'Settings' }},
-      id: { common: { dashboard: 'Dasbor', myLeave: 'Cuti Saya', employees: 'Karyawan', departments: 'Departemen', positions: 'Posisi', leaveRequests: 'Permintaan Cuti', reports: 'Laporan', profile: 'Profil', settings: 'Pengaturan' }},
-      es: { common: { dashboard: 'Panel', myLeave: 'Mi Permiso', employees: 'Empleados', departments: 'Departamentos', positions: 'Posiciones', leaveRequests: 'Solicitudes de Permiso', reports: 'Informes', profile: 'Perfil', settings: 'Configuración' }},
-      zh: { common: { dashboard: '仪表板', myLeave: '我的请假', employees: '员工', departments: '部门', positions: '职位', leaveRequests: '请假申请', reports: '报告', profile: '个人资料', settings: '设置' }},
-    };
-    
-    const keyParts = key.split('.');
-    if (keyParts.length === 2) {
-      return trans[lang]?.[keyParts[0]]?.[keyParts[1]] || key;
-    }
-    return key;
-  };
+  const t = getTranslations(language);
 
   const navigation = navigationConfig
     .map((group) => ({
@@ -77,7 +84,7 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "relative flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+        "fixed left-0 top-0 h-screen flex flex-col border-r bg-card transition-all duration-300 ease-in-out z-30",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
@@ -117,7 +124,7 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
           <div key={group.title} className="mb-4">
             {!isCollapsed && (
               <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t(`common.${group.title.toLowerCase().replace(' ', '')}`) || group.title}
+                {t.common[getGroupTitle(group.title)] || group.title}
               </h3>
             )}
             <ul className="space-y-1">
@@ -132,10 +139,10 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                       isCollapsed && "justify-center px-2"
                     )}
-                    title={isCollapsed ? t(getNavName(item.name)) : undefined}
+                    title={isCollapsed ? t.common[getNavName(item.name)] || item.name : undefined}
                   >
                     <item.icon className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span>{t(getNavName(item.name))}</span>}
+                    {!isCollapsed && <span>{t.common[getNavName(item.name)] || item.name}</span>}
                   </Link>
                 </li>
               ))}
@@ -149,11 +156,11 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
         <Button
           variant="ghost"
           className={cn("w-full justify-start", isCollapsed && "justify-center px-2")}
-          title={isCollapsed ? t('common.signOut') : undefined}
+          title={isCollapsed ? t.common.signOut : undefined}
           onClick={handleSignOut}
         >
           <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-          {!isCollapsed && <span>{t('common.signOut')}</span>}
+          {!isCollapsed && <span>{t.common.signOut}</span>}
         </Button>
       </div>
     </aside>
