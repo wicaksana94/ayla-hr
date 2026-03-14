@@ -38,9 +38,14 @@ pub struct CreateEmployeeRequest {
     pub clerk_id: String,
     pub email: String,
     pub name: String,
+    #[serde(default = "default_role")]
     pub role: UserRole,
     pub department_id: Option<i64>,
     pub position_id: Option<i64>,
+}
+
+fn default_role() -> UserRole {
+    UserRole::Employee
 }
 
 pub async fn create_employee(

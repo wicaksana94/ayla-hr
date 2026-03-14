@@ -2,8 +2,8 @@ import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
 import { Role } from "@/config/navigation";
 
-// Default role - in production, this would come from your database
-const DEFAULT_ROLE: Role = 'employee';
+// Default role - first user is HR Manager
+const DEFAULT_ROLE: Role = 'hr_manager';
 
 export default function DashboardLayout({
   children,
@@ -11,7 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   // Role is fetched on client side or passed from server
-  // For now, use default role
+  // For now, use default HR Manager role
   const userRole: Role = DEFAULT_ROLE;
 
   return (

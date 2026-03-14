@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@clerk/nextjs";
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const user = useUser();
   const { language } = useI18n();
   
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { profile: { title: 'Profile', subtitle: 'Manage your profile', userInfo: 'User Information', name: 'Name', email: 'Email', role: 'Role', employee: 'Employee' }},
-      id: { profile: { title: 'Profil', subtitle: 'Kelola profil Anda', userInfo: 'Informasi Pengguna', name: 'Nama', email: 'Email', role: 'Peran', employee: 'Karyawan' }},
-      es: { profile: { title: 'Perfil', subtitle: 'Gestiona tu perfil', userInfo: 'Información del Usuario', name: 'Nombre', email: 'Correo', role: 'Rol', employee: 'Empleado' }},
-      zh: { profile: { title: '个人资料', subtitle: '管理您的个人资料', userInfo: '用户信息', name: '姓名', email: '邮箱', role: '角色', employee: '员工' }}
+      en: { profile: { title: 'Profile', subtitle: 'Manage your profile', userInfo: 'User Information', name: 'Name', email: 'Email', role: 'Role', hrManager: 'HR Manager' }},
+      id: { profile: { title: 'Profil', subtitle: 'Kelola profil Anda', userInfo: 'Informasi Pengguna', name: 'Nama', email: 'Email', role: 'Peran', hrManager: 'Manajer HR' }},
+      es: { profile: { title: 'Perfil', subtitle: 'Gestiona tu perfil', userInfo: 'Información del Usuario', name: 'Nombre', email: 'Correo', role: 'Rol', hrManager: 'Gerente de RRHH' }},
+      zh: { profile: { title: '个人资料', subtitle: '管理您的个人资料', userInfo: '用户信息', name: '姓名', email: '邮箱', role: '角色', hrManager: '人力资源经理' }}
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -33,15 +33,15 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium">{t('profile.name')}</label>
-            <p className="text-muted-foreground">{user?.fullName || 'Not set'}</p>
+            <p className="text-muted-foreground">{user.user?.fullName || 'Not set'}</p>
           </div>
           <div>
             <label className="text-sm font-medium">{t('profile.email')}</label>
-            <p className="text-muted-foreground">{user?.primaryEmailAddress?.emailAddress}</p>
+            <p className="text-muted-foreground">{user.user?.primaryEmailAddress?.emailAddress}</p>
           </div>
           <div>
             <label className="text-sm font-medium">{t('profile.role')}</label>
-            <p className="text-muted-foreground">{t('profile.employee')}</p>
+            <p className="text-muted-foreground">{t('profile.hrManager')}</p>
           </div>
         </CardContent>
       </Card>
