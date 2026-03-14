@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y pkg-config libssl-dev
 # Copy source
 COPY backend/src ./src
 COPY backend/Cargo.toml ./Cargo.toml
+COPY backend/Cargo.lock ./Cargo.lock
 
 # Build release binary
 RUN cargo build --release
