@@ -1,11 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-export type { DateRange, SelectRangeEvent, CalendarProps } from "react-day-picker"
+export type { DateRange }
+
+type CalendarProps = React.ComponentProps<typeof DayPicker>
 
 function Calendar({
   className,
@@ -49,27 +51,6 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-      }}
-      components={{
-        Chevron: ({ orientation }) => {
-          return (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={cn(
-                "h-4 w-4",
-                orientation === "left" && "rotate-180"
-              )}
-            />
-          )
-        },
       }}
       {...props}
     />
