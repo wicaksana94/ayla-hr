@@ -1,13 +1,15 @@
+import createMiddleware from 'next-intl/middleware';
 import { authMiddleware } from "@clerk/nextjs";
-
-export default authMiddleware({
-  // Public routes that don't require authentication
-  publicRoutes: [
-    "/",
-    "/(.*)",
-  ],
+ 
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales: ['en', 'id', 'es', 'zh'],
+ 
+  // Used when no locale matches
+  defaultLocale: 'en'
 });
-
+ 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  // Match only internationalized pathnames
+  matcher: ['/', '/(en|id|es|zh)/:path*']
 };

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/use-sign-out';
+import { useI18n } from '@/lib/i18n';
 
 interface SidebarProps {
   userRole?: Role;
@@ -21,6 +22,44 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const handleSignOut = useSignOut();
+  const { language } = useI18n();
+
+  // Map navigation names to translation keys
+  const getNavName = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      'Dashboard': 'common.dashboard',
+      'My Leave': 'common.myLeave',
+      'Employees': 'common.employees',
+      'Departments': 'common.departments',
+      'Positions': 'common.positions',
+      'Leave Requests': 'common.leaveRequests',
+      'Reports': 'common.reports',
+      'Profile': 'common.profile',
+      'Settings': 'common.settings',
+    };
+    return nameMap[name] || name;
+  };
+
+  // Get translated name
+  const t = (key: string): string => {
+    const keys = key.split('.');
+    let value: any = {};
+    const lang = language as 'en' | 'id' | 'es' | 'zh';
+    
+    // Simple translation lookup
+    const trans: Record<string, Record<string, Record<string, string>>> = {
+      en: { common: { dashboard: 'Dashboard', myLeave: 'My Leave', employees: 'Employees', departments: 'Departments', positions: 'Positions', leaveRequests: 'Leave Requests', reports: 'Reports', profile: 'Profile', settings: 'Settings' }},
+      id: { common: { dashboard: 'Dasbor', myLeave: 'Cuti Saya', employees: 'Karyawan', departments: 'Departemen', positions: 'Posisi', leaveRequests: 'Permintaan Cuti', reports: 'Laporan', profile: 'Profil', settings: 'Pengaturan' }},
+      es: { common: { dashboard: 'Panel', myLeave: 'Mi Permiso', employees: 'Empleados', departments: 'Departamentos', positions: 'Posiciones', leaveRequests: 'Solicitudes de Permiso', reports: 'Informes', profile: 'Perfil', settings: 'Configuración' }},
+      zh: { common: { dashboard: '仪表板', myLeave: '我的请假', employees: '员工', departments: '部门', positions: '职位', leaveRequests: '请假申请', reports: '报告', profile: '个人资料', settings: '设置' }},
+    };
+    
+    const keyParts = key.split('.');
+    if (keyParts.length === 2) {
+      return trans[lang]?.[keyParts[0]]?.[keyParts[1]] || key;
+    }
+    return key;
+  };
 
   const navigation = navigationConfig
     .map((group) => ({
@@ -32,7 +71,6 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
     .filter((group) => group.items.length > 0);
 
   const isActive = (href: string) => {
-    // Exact match only - prevents multiple highlights
     return pathname === href;
   };
 
@@ -79,7 +117,7 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
           <div key={group.title} className="mb-4">
             {!isCollapsed && (
               <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {group.title}
+                {t(`common.${group.title.toLowerCase().replace(' ', '')}`) || group.title}
               </h3>
             )}
             <ul className="space-y-1">
@@ -94,10 +132,10 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                       isCollapsed && "justify-center px-2"
                     )}
-                    title={isCollapsed ? item.name : undefined}
+                    title={isCollapsed ? t(getNavName(item.name)) : undefined}
                   >
                     <item.icon className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span>{item.name}</span>}
+                    {!isCollapsed && <span>{t(getNavName(item.name))}</span>}
                   </Link>
                 </li>
               ))}
@@ -111,11 +149,11 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
         <Button
           variant="ghost"
           className={cn("w-full justify-start", isCollapsed && "justify-center px-2")}
-          title={isCollapsed ? "Sign Out" : undefined}
+          title={isCollapsed ? t('common.signOut') : undefined}
           onClick={handleSignOut}
         >
           <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-          {!isCollapsed && <span>Sign Out</span>}
+          {!isCollapsed && <span>{t('common.signOut')}</span>}
         </Button>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { 
   Bell, 
@@ -18,31 +18,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { useI18n, translations, t } from '@/lib/i18n';
 
-interface NavbarProps {
-  onLanguageChange?: (lang: string) => void;
-}
-
-const languages = [
+const languageOptions = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'id', name: 'Indonesia', flag: '🇮🇩' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
 ];
 
-export function Navbar({ onLanguageChange }: NavbarProps) {
+export function Navbar() {
   const { user, isLoaded: isUserLoaded } = useUser();
   const { isLoaded: isAuthLoaded } = useAuth();
-  const [currentLang, setCurrentLang] = useState('en');
+  const { language, setLanguage } = useI18n();
   const [notifications] = useState(3);
+  const [mounted, setMounted] = useState(false);
 
-  const handleLanguageChange = (langCode: string) => {
-    setCurrentLang(langCode);
-    onLanguageChange?.(langCode);
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const currentLanguage = languages.find(l => l.code === currentLang) || languages[0];
+  const currentLanguage = languageOptions.find(l => l.code === language) || languageOptions[0];
   const isLoaded = isUserLoaded && isAuthLoaded;
 
   return (
@@ -66,17 +62,17 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            {languages.map((lang) => (
+            {languageOptions.map((lang) => (
               <DropdownMenuItem
                 key={lang.code}
-                onClick={() => handleLanguageChange(lang.code)}
+                onClick={() => setLanguage(lang.code as any)}
                 className="flex items-center justify-between"
               >
                 <span className="flex items-center">
                   <span className="mr-2">{lang.flag}</span>
                   {lang.name}
                 </span>
-                {currentLang === lang.code && (
+                {language === lang.code && (
                   <Check className="h-4 w-4" />
                 )}
               </DropdownMenuItem>
@@ -101,7 +97,7 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
 
         {/* User Profile */}
         <div className="flex items-center space-x-2">
-          {isLoaded ? (
+          {isLoaded && mounted ? (
             <>
               <div className="hidden md:block text-right">
                 <p className="text-sm font-medium">{user?.fullName || user?.username || 'User'}</p>
