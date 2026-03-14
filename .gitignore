@@ -37,3 +37,5 @@ next-env.d.ts
 
 # Rust
 target/
+.env.local
+.env.local
