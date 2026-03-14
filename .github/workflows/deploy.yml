@@ -1,0 +1,18 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-compute/actions/deploy@v1
+        with:
+          renderServiceName: ayla-hr-backend
+          renderApiKey: ${{ secrets.RENDER_API_KEY }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

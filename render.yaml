@@ -1,0 +1,19 @@
+# Render deployment configuration
+# Save as render.yaml in the root directory
+
+services:
+  - type: web
+    name: ayla-hr-backend
+    env: docker
+    region: Singapore
+    buildCommand: docker build -t ayla-hr-backend .
+    startCommand: docker run -p 8080:8080 ayla-hr-backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ayla-hr-db
+          property: connectionString
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
