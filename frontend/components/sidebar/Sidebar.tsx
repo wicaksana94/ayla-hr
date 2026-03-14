@@ -32,7 +32,8 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
     .filter((group) => group.items.length > 0);
 
   const isActive = (href: string) => {
-    return pathname === href || pathname.startsWith(href + '/');
+    // Exact match only - prevents multiple highlights
+    return pathname === href;
   };
 
   return (

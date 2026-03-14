@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { 
   Bell, 
   Globe, 
   ChevronDown,
   Check,
   Languages,
-  Menu
+  Menu,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -31,7 +32,8 @@ const languages = [
 ];
 
 export function Navbar({ onLanguageChange }: NavbarProps) {
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { isLoaded: isAuthLoaded } = useAuth();
   const [currentLang, setCurrentLang] = useState('en');
   const [notifications] = useState(3); // Mock notification count
 
@@ -41,6 +43,7 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
   };
 
   const currentLanguage = languages.find(l => l.code === currentLang) || languages[0];
+  const isLoaded = isUserLoaded && isAuthLoaded;
 
   return (
     <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
@@ -99,18 +102,24 @@ export function Navbar({ onLanguageChange }: NavbarProps) {
 
         {/* User Profile */}
         <div className="flex items-center space-x-2">
-          <div className="hidden md:block text-right">
-            <p className="text-sm font-medium">{user?.fullName || user?.username}</p>
-            <p className="text-xs text-muted-foreground">{user?.primaryEmailAddress?.emailAddress}</p>
-          </div>
-          <UserButton 
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: "h-9 w-9"
-              }
-            }}
-          />
+          {isLoaded ? (
+            <>
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium">{user?.fullName || user?.username || 'User'}</p>
+                <p className="text-xs text-muted-foreground">{user?.primaryEmailAddress?.emailAddress || ''}</p>
+              </div>
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "h-9 w-9"
+                  }
+                }}
+              />
+            </>
+          ) : (
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          )}
         </div>
       </div>
     </header>
