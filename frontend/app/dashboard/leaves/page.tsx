@@ -10,7 +10,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar, DateRange } from '@/components/ui/calendar';
 import { 
   Popover, 
   PopoverContent, 
@@ -27,10 +27,7 @@ const leaveTypes = [
 ];
 
 export default function LeavesPage() {
-  const [selectedRange, setSelectedRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
 
   const totalDays = selectedRange.from && selectedRange.to 
