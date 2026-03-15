@@ -1,3 +1,5 @@
+"use client";
+
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
 import { Role } from "@/config/navigation";
