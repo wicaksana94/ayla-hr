@@ -36,8 +36,10 @@ async fn main() {
     println!("Connected to database!");
 
     // CORS configuration - use environment variable for allowed origins
-    let allowed_origins: Vec<&str> = env::var("ALLOWED_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string())
+    let allowed_origins_str = env::var("ALLOWED_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    
+    let allowed_origins: Vec<&str> = allowed_origins_str
         .split(',')
         .map(|s| s.trim())
         .collect();
