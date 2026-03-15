@@ -8,7 +8,8 @@ import { navigationConfig, Role } from '@/config/navigation';
 import { 
   ChevronLeft, 
   ChevronRight,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSignOut } from '@/hooks/use-sign-out';
@@ -16,6 +17,8 @@ import { useI18n } from '@/lib/i18n';
 
 interface SidebarProps {
   userRole?: Role;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 // Translation function
@@ -61,7 +64,7 @@ const getGroupTitle = (title: string): string => {
   return titleMap[title] || title;
 };
 
-export function Sidebar({ userRole = 'employee' }: SidebarProps) {
+export function Sidebar({ userRole = 'employee', isOpen = false, onClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const handleSignOut = useSignOut();
@@ -82,87 +85,153 @@ export function Sidebar({ userRole = 'employee' }: SidebarProps) {
   };
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 h-screen flex flex-col border-r bg-card transition-all duration-300 ease-in-out z-30",
-        isCollapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Logo Section */}
-      <div className="flex items-center justify-between p-4 border-b">
-        {!isCollapsed && (
+    <>
+      {/* Mobile Sidebar - Slide in */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col border-r bg-card transition-transform duration-300 ease-in-out md:hidden",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Logo Section */}
+        <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold">A</span>
             </div>
             <span className="text-xl font-bold">AylaHR</span>
           </div>
-        )}
-        {isCollapsed && (
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold">A</span>
-          </div>
-        )}
-      </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="md:hidden">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
 
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-7 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent"
-        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </button>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        {navigation.map((group) => (
-          <div key={group.title} className="mb-4">
-            {!isCollapsed && (
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-2">
+          {navigation.map((group) => (
+            <div key={group.title} className="mb-4">
               <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {t.common[getGroupTitle(group.title)] || group.title}
               </h3>
-            )}
-            <ul className="space-y-1">
-              {group.items.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isActive(item.href)
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                      isCollapsed && "justify-center px-2"
-                    )}
-                    title={isCollapsed ? t.common[getNavName(item.name)] || item.name : undefined}
-                  >
-                    <item.icon className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span>{t.common[getNavName(item.name)] || item.name}</span>}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
+              <ul className="space-y-1">
+                {group.items.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5 mr-3" />
+                      <span>{t.common[getNavName(item.name)] || item.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-      {/* User Section */}
-      <div className="border-t p-2">
-        <Button
-          variant="ghost"
-          className={cn("w-full justify-start", isCollapsed && "justify-center px-2")}
-          title={isCollapsed ? t.common.signOut : undefined}
-          onClick={handleSignOut}
+        {/* User Section */}
+        <div className="border-t p-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            <span>{t.common.signOut}</span>
+          </Button>
+        </div>
+      </aside>
+
+      {/* Desktop Sidebar - Fixed */}
+      <aside
+        className={cn(
+          "hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:flex-col md:w-64 md:border-r md:bg-card md:transition-all md:duration-300",
+          isCollapsed && "md:w-16"
+        )}
+      >
+        {/* Logo Section */}
+        <div className="flex items-center justify-between p-4 border-b">
+          {!isCollapsed && (
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold">A</span>
+              </div>
+              <span className="text-xl font-bold">AylaHR</span>
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto">
+              <span className="text-primary-foreground font-bold">A</span>
+            </div>
+          )}
+        </div>
+
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:flex absolute -right-3 top-7 z-10 h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-          {!isCollapsed && <span>{t.common.signOut}</span>}
-        </Button>
-      </div>
-    </aside>
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-2">
+          {navigation.map((group) => (
+            <div key={group.title} className="mb-4">
+              {!isCollapsed && (
+                <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {t.common[getGroupTitle(group.title)] || group.title}
+                </h3>
+              )}
+              <ul className="space-y-1">
+                {group.items.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        isCollapsed && "justify-center px-2"
+                      )}
+                      title={isCollapsed ? t.common[getNavName(item.name)] || item.name : undefined}
+                    >
+                      <item.icon className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")} />
+                      {!isCollapsed && <span>{t.common[getNavName(item.name)] || item.name}</span>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* User Section */}
+        <div className="border-t p-2">
+          <Button
+            variant="ghost"
+            className={cn("w-full justify-start", isCollapsed && "justify-center px-2")}
+            title={isCollapsed ? t.common.signOut : undefined}
+            onClick={handleSignOut}
+          >
+            <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+            {!isCollapsed && <span>{t.common.signOut}</span>}
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 }

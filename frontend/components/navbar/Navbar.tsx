@@ -27,7 +27,7 @@ const languageOptions = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
 ];
 
-export function Navbar() {
+export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, isLoaded: isUserLoaded } = useUser();
   const { isLoaded: isAuthLoaded } = useAuth();
   const { language, setLanguage } = useI18n();
@@ -45,7 +45,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
       {/* Left side - Mobile menu */}
       <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
         </Button>
       </div>

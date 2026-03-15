@@ -1,8 +1,8 @@
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
 import { Role } from "@/config/navigation";
+import { useState } from "react";
 
-// Default role - first user is HR Manager
 const DEFAULT_ROLE: Role = 'hr_manager';
 
 export default function DashboardLayout({
@@ -10,20 +10,26 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Role is fetched on client side or passed from server
-  // For now, use default HR Manager role
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const userRole: Role = DEFAULT_ROLE;
 
   return (
     <div className="min-h-screen">
-      <Sidebar userRole={userRole} />
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       
-      {/* Main Content - with margin to account for fixed sidebar */}
-      <div className="ml-64 transition-all duration-300">
-        <Navbar />
+      <Sidebar userRole={userRole} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      {/* Main Content */}
+      <div className="md:ml-64 transition-all duration-300">
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
         
-        {/* Page Content */}
-        <main className="flex-1 bg-background p-4 md:p-6">
+        <main className="bg-background p-4 md:p-6">
           {children}
         </main>
       </div>

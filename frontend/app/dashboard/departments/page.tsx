@@ -94,7 +94,7 @@ export default function DepartmentsPage() {
 
       <div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('departments.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" /></div>
 
-      <Card><CardContent className="p-0">
+      <Card><CardContent className="p-0 overflow-x-auto">
         <Table>
           <TableHeader><TableRow><TableHead>{t('departments.name')}</TableHead><TableHead>{t('departments.code')}</TableHead><TableHead className="text-right">{t('departments.actions')}</TableHead></TableRow></TableHeader>
           <TableBody>
