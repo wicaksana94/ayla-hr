@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/lib/i18n';
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').repl
 
 export default function PositionsPage() {
   const { language } = useI18n();
+  const searchParams = useSearchParams();
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +50,15 @@ export default function PositionsPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Auto-open dialog if dept param in URL
+  useEffect(() => {
+    const deptId = searchParams.get('dept');
+    if (deptId && departments.length > 0) {
+      setNewPosition(prev => ({ ...prev, department_id: deptId }));
+      setIsAddDialogOpen(true);
+    }
+  }, [searchParams, departments]);
 
   const getDeptName = (deptId: string | null) => {
     if (!deptId) return '-';
