@@ -25,9 +25,7 @@ pub struct Department {
 pub struct Position {
     pub id: i32,
     pub name: String,
-    pub departements: Option<String>, // Typo from user's schema
-    pub level: Option<i32>,
-    pub access_level: Option<String>,
+    pub departements: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -276,9 +274,7 @@ pub struct UpdateDepartmentRequest {
 #[derive(Debug, Deserialize)]
 pub struct CreatePositionRequest {
     pub name: String,
-    pub department_id: i32,
-    pub level: Option<i32>,
-    pub access_level: Option<String>,
+    pub departements: String, // Using departements as per user's schema
 }
 
 #[derive(Debug, Deserialize)]

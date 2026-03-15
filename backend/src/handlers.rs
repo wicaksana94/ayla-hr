@@ -219,7 +219,7 @@ pub async fn list_positions(
     State(pool): State<PgPool>,
 ) -> Json<Vec<Position>> {
     match sqlx::query_as::<_, Position>(
-        "SELECT id, name, departements, level, access_level FROM positions ORDER BY name"
+        "SELECT id, name, departements FROM positions ORDER BY name"
     )
     .fetch_all(&pool)
     .await
@@ -237,14 +237,12 @@ pub async fn create_position(
     Json(payload): Json<CreatePositionRequest>,
 ) -> Result<Json<Position>, (StatusCode, String)> {
     match sqlx::query_as::<_, Position>(
-        "INSERT INTO positions (name, departements, level, access_level, is_active)
-         VALUES ($1, $2, $3, $4, true)
-         RETURNING id, name, departements, level, access_level"
+        "INSERT INTO positions (name, departements)
+         VALUES ($1, $2)
+         RETURNING id, name, departements"
     )
     .bind(payload.name)
-    .bind(payload.department_id.to_string()) // Convert to string due to user's schema
-    .bind(payload.level)
-    .bind(payload.access_level)
+    .bind(payload.departements)
     .fetch_one(&pool)
     .await
     {
