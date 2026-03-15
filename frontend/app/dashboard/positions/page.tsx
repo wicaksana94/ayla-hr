@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
 
-interface Position { id: number; name: string; departements: string | null; }
+interface Position { id: number; name: string; department_id: number | null; level: number | null; access_level: string | null; }
 interface Department { id: number; name: string; }
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
@@ -26,11 +26,12 @@ function PositionsContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newPosition, setNewPosition] = useState({ name: '', department_id: '' });
+  const [error, setError] = useState<string | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure?', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department' }},
-      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Yakin?', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen' }}
+      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure?', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department', nameRequired: 'Name is required' }},
+      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Yakin?', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen', nameRequired: 'Nama wajib diisi' }}
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -38,20 +39,31 @@ function PositionsContent() {
 
   const fetchData = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const [posRes, deptRes] = await Promise.all([
         fetch(`${apiUrl}/api/positions`),
         fetch(`${apiUrl}/api/departments`),
       ]);
-      setPositions(await posRes.json());
-      setDepartments(await deptRes.json());
-    } catch (error) { console.error('Error:', error); }
+      
+      if (!posRes.ok) throw new Error('Failed to fetch positions');
+      if (!deptRes.ok) throw new Error('Failed to fetch departments');
+      
+      const posData = await posRes.json();
+      const deptData = await deptRes.json();
+      
+      // Handle paginated response
+      setPositions(posData.data || posData);
+      setDepartments(deptData);
+    } catch (err: any) { 
+      console.error('Error:', err);
+      setError(err.message);
+    }
     finally { setIsLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  // Auto-open dialog if dept param in URL
   useEffect(() => {
     const deptId = searchParams.get('dept');
     if (deptId && departments.length > 0) {
@@ -60,31 +72,60 @@ function PositionsContent() {
     }
   }, [searchParams, departments]);
 
-  const getDeptName = (deptId: string | null) => {
+  const getDeptName = (deptId: number | null) => {
     if (!deptId) return '-';
-    const dept = departments.find(d => d.id.toString() === deptId);
+    const dept = departments.find(d => d.id === deptId);
     return dept?.name || '-';
   };
 
   const handleAdd = async () => {
+    setError(null);
+    
+    if (!newPosition.name.trim()) {
+      setError(t('positions.nameRequired'));
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch(`${apiUrl}/api/positions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newPosition.name, departements: newPosition.department_id }),
+        body: JSON.stringify({ 
+          name: newPosition.name, 
+          department_id: newPosition.department_id ? parseInt(newPosition.department_id) : null 
+        }),
       });
-      if (res.ok) { await fetchData(); setIsAddDialogOpen(false); setNewPosition({ name: '', department_id: '' }); }
-    } catch (error) { console.error('Error:', error); }
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Error: ${res.status}`);
+      }
+      
+      await fetchData(); 
+      setIsAddDialogOpen(false); 
+      setNewPosition({ name: '', department_id: '' });
+    } catch (err: any) { 
+      console.error('Error:', err);
+      setError(err.message);
+    }
     finally { setIsSaving(false); }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('positions.confirmDelete'))) return;
+    setError(null);
     try {
       const res = await fetch(`${apiUrl}/api/positions/${id}`, { method: 'DELETE' });
-      if (res.ok) await fetchData();
-    } catch (error) { console.error('Error:', error); }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Error: ${res.status}`);
+      }
+      await fetchData();
+    } catch (err: any) { 
+      console.error('Error:', err);
+      setError(err.message);
+    }
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /><span className="ml-2">{t('positions.loading')}</span></div>;
@@ -98,6 +139,7 @@ function PositionsContent() {
           <DialogContent>
             <DialogHeader><DialogTitle>{t('positions.addPosition')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
+              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
               <div className="space-y-2"><label>{t('positions.name')}</label><Input value={newPosition.name} onChange={(e) => setNewPosition({...newPosition, name: e.target.value})} placeholder="Software Engineer" /></div>
               <div className="space-y-2"><label>{t('positions.department')}</label>
                 <Select value={newPosition.department_id} onValueChange={(val) => setNewPosition({...newPosition, department_id: val})}>
@@ -107,12 +149,14 @@ function PositionsContent() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('positions.cancel')}</Button>
+              <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setError(null); }}>{t('positions.cancel')}</Button>
               <Button onClick={handleAdd} disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('positions.save')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {error && !isAddDialogOpen && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
 
       <div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('positions.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" /></div>
 
@@ -122,7 +166,7 @@ function PositionsContent() {
           <TableBody>
             {positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
               positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pos) => (
-                <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.departements)}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete(pos.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete(pos.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
               ))
             ) : (<TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">{t('positions.noResults')}</TableCell></TableRow>)}
           </TableBody>

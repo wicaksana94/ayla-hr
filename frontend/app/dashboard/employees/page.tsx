@@ -51,7 +51,7 @@ interface Department {
 interface Position {
   id: number;
   name: string;
-  departements: string | null;
+  department_id: number | null;
 }
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
@@ -111,9 +111,10 @@ export default function EmployeesPage() {
       const deptData = await deptRes.json();
       const posData = await posRes.json();
       
-      setEmployees(empData);
+      // Handle paginated or direct array response
+      setEmployees(empData.data || empData);
       setDepartments(deptData);
-      setPositions(posData);
+      setPositions(posData.data || posData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -143,7 +144,7 @@ export default function EmployeesPage() {
   );
 
   const filteredPositions = newEmployee.department_id 
-    ? positions.filter(p => p.departements === newEmployee.department_id)
+    ? positions.filter(p => p.department_id?.toString() === newEmployee.department_id)
     : [];
 
   const handleAddEmployee = async () => {
