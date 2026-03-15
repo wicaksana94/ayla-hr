@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ interface Department { id: number; name: string; }
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
-export default function PositionsPage() {
+function PositionsContent() {
   const { language } = useI18n();
   const searchParams = useSearchParams();
   const [positions, setPositions] = useState<Position[]>([]);
@@ -129,5 +129,13 @@ export default function PositionsPage() {
         </Table>
       </CardContent></Card>
     </div>
+  );
+}
+
+export default function PositionsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <PositionsContent />
+    </Suspense>
   );
 }
