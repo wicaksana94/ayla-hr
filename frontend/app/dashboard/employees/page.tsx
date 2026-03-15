@@ -16,7 +16,6 @@ import {
 import { 
   Dialog, 
   DialogContent, 
-  DialogDescription, 
   DialogFooter, 
   DialogHeader, 
   DialogTitle, 
@@ -29,33 +28,48 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, MoreHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
 
-// Mock employee data
-const mockEmployees = [
-  { id: 1, name: 'John Doe', email: 'john.doe@aylahr.com', department: 'Engineering', position: 'Software Engineer', status: 'active', joinDate: '2024-01-15' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@aylahr.com', department: 'Human Resources', position: 'HR Manager', status: 'active', joinDate: '2023-06-01' },
-  { id: 3, name: 'Michael Johnson', email: 'michael.j@aylahr.com', department: 'Marketing', position: 'Marketing Lead', status: 'active', joinDate: '2023-09-10' },
-  { id: 4, name: 'Sarah Williams', email: 'sarah.w@aylahr.com', department: 'Sales', position: 'Sales Executive', status: 'active', joinDate: '2024-02-20' },
-  { id: 5, name: 'David Brown', email: 'david.b@aylahr.com', department: 'Engineering', position: 'Senior Developer', status: 'inactive', joinDate: '2022-11-05' },
-];
+interface Employee {
+  id: number;
+  clerk_id: string;
+  email: string;
+  name: string;
+  role: string;
+  department_id: number | null;
+  position_id: number | null;
+  language: string;
+  is_active: boolean;
+}
 
-const departments = ['Engineering', 'Human Resources', 'Marketing', 'Sales', 'Finance', 'Operations'];
-const positions = ['Software Engineer', 'Senior Developer', 'HR Manager', 'Marketing Lead', 'Sales Executive', 'Finance Manager', 'Operations Manager'];
-const statuses = ['active', 'inactive'];
+interface Department {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+interface Position {
+  id: number;
+  name: string;
+}
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export default function EmployeesPage() {
   const { language } = useI18n();
-  const [employees, setEmployees] = useState(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [newEmployee, setNewEmployee] = useState({
+    clerk_id: '',
     name: '',
     email: '',
-    department: '',
-    position: '',
-    status: 'active',
+    department_id: '',
+    position_id: '',
   });
 
   const t = (key: string): string => {
@@ -65,7 +79,7 @@ export default function EmployeesPage() {
           title: 'Employees', subtitle: 'Manage employee data', addEmployee: 'Add Employee', search: 'Search employees...', 
           name: 'Name', email: 'Email', department: 'Department', position: 'Position', status: 'Status', joinDate: 'Join Date', 
           actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete this employee?',
-          noResults: 'No employees found', firstName: 'First Name', lastName: 'Last Name'
+          noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', clerkId: 'Clerk ID', loading: 'Loading...'
         }
       },
       id: { 
@@ -73,23 +87,7 @@ export default function EmployeesPage() {
           title: 'Karyawan', subtitle: 'Kelola data karyawan', addEmployee: 'Tambah Karyawan', search: 'Cari karyawan...', 
           name: 'Nama', email: 'Email', department: 'Departemen', position: 'Posisi', status: 'Status', joinDate: 'Tanggal Masuk', 
           actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus karyawan ini?',
-          noResults: 'Karyawan tidak ditemukan', firstName: 'Nama Depan', lastName: 'Nama Belakang'
-        }
-      },
-      es: { 
-        employees: { 
-          title: 'Empleados', subtitle: 'Gestionar datos de empleados', addEmployee: 'Agregar Empleado', search: 'Buscar empleados...', 
-          name: 'Nombre', email: 'Correo', department: 'Departamento', position: 'Posición', status: 'Estado', joinDate: 'Fecha de Ingreso', 
-          actions: 'Acciones', edit: 'Editar', delete: 'Eliminar', save: 'Guardar', cancel: 'Cancelar', confirmDelete: '¿Está seguro de que desea eliminar este empleado?',
-          noResults: 'No se encontraron empleados', firstName: 'Nombre', lastName: 'Apellido'
-        }
-      },
-      zh: { 
-        employees: { 
-          title: '员工', subtitle: '管理员工数据', addEmployee: '添加员工', search: '搜索员工...', 
-          name: '姓名', email: '邮箱', department: '部门', position: '职位', status: '状态', joinDate: '入职日期', 
-          actions: '操作', edit: '编辑', delete: '删除', save: '保存', cancel: '取消', confirmDelete: '您确定要删除此员工吗？',
-          noResults: '未找到员工', firstName: '名', lastName: '姓'
+          noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', clerkId: 'Clerk ID', loading: 'Memuat...'
         }
       }
     };
@@ -97,34 +95,124 @@ export default function EmployeesPage() {
     return trans[language]?.[category]?.[keyPart] || key;
   };
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleAddEmployee = () => {
-    const newId = Math.max(...employees.map(e => e.id)) + 1;
-    const today = new Date().toISOString().split('T')[0];
-    setEmployees([...employees, { ...newEmployee, id: newId, joinDate: today }]);
-    setIsAddDialogOpen(false);
-    setNewEmployee({ name: '', email: '', department: '', position: '', status: 'active' });
-  };
-
-  const handleEditEmployee = (employee: any) => {
-    setEditingEmployee(employee);
-  };
-
-  const handleSaveEdit = () => {
-    setEmployees(employees.map(e => e.id === editingEmployee.id ? editingEmployee : e));
-    setEditingEmployee(null);
-  };
-
-  const handleDeleteEmployee = (id: number) => {
-    if (confirm(t('employees.confirmDelete'))) {
-      setEmployees(employees.filter(e => e.id !== id));
+  // Fetch data from API
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [empRes, deptRes, posRes] = await Promise.all([
+        fetch(`${apiUrl}/api/employees`),
+        fetch(`${apiUrl}/api/departments`),
+        fetch(`${apiUrl}/api/positions`),
+      ]);
+      
+      const empData = await empRes.json();
+      const deptData = await deptRes.json();
+      const posData = await posRes.json();
+      
+      setEmployees(empData);
+      setDepartments(deptData);
+      setPositions(posData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const getDepartmentName = (deptId: number | null) => {
+    if (!deptId) return '-';
+    const dept = departments.find(d => d.id === deptId);
+    return dept?.name || '-';
+  };
+
+  const getPositionName = (posId: number | null) => {
+    if (!posId) return '-';
+    const pos = positions.find(p => p.id === posId);
+    return pos?.name || '-';
+  };
+
+  const filteredEmployees = employees.filter(emp => 
+    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleAddEmployee = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/employees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clerk_id: newEmployee.clerk_id,
+          name: newEmployee.name,
+          email: newEmployee.email,
+          department_id: newEmployee.department_id ? parseInt(newEmployee.department_id) : null,
+          position_id: newEmployee.position_id ? parseInt(newEmployee.position_id) : null,
+        }),
+      });
+      
+      if (res.ok) {
+        await fetchData();
+        setIsAddDialogOpen(false);
+        setNewEmployee({ clerk_id: '', name: '', email: '', department_id: '', position_id: '' });
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+    }
+  };
+
+  const handleEditEmployee = async () => {
+    if (!editingEmployee) return;
+    
+    try {
+      const res = await fetch(`${apiUrl}/api/employees/${editingEmployee.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingEmployee.name,
+          email: editingEmployee.email,
+          department_id: editingEmployee.department_id,
+          position_id: editingEmployee.position_id,
+          is_active: editingEmployee.is_active,
+        }),
+      });
+      
+      if (res.ok) {
+        await fetchData();
+        setEditingEmployee(null);
+      }
+    } catch (error) {
+      console.error('Error updating employee:', error);
+    }
+  };
+
+  const handleDeleteEmployee = async (id: number) => {
+    if (!confirm(t('employees.confirmDelete'))) return;
+    
+    try {
+      const res = await fetch(`${apiUrl}/api/employees/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">{t('employees.loading')}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -145,23 +233,13 @@ export default function EmployeesPage() {
               <DialogTitle>{t('employees.addEmployee')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label>{t('employees.firstName')}</label>
-                  <Input 
-                    value={newEmployee.name.split(' ')[0]} 
-                    onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
-                    placeholder="John"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label>{t('employees.lastName')}</label>
-                  <Input 
-                    value={newEmployee.name.split(' ').slice(1).join(' ')} 
-                    onChange={(e) => setNewEmployee({...newEmployee, name: `${newEmployee.name.split(' ')[0]} ${e.target.value}`})}
-                    placeholder="Doe"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label>{t('employees.name')}</label>
+                <Input 
+                  value={newEmployee.name} 
+                  onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
+                  placeholder="John Doe"
+                />
               </div>
               <div className="space-y-2">
                 <label>{t('employees.email')}</label>
@@ -169,31 +247,31 @@ export default function EmployeesPage() {
                   type="email"
                   value={newEmployee.email} 
                   onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
-                  placeholder="john.doe@aylahr.com"
+                  placeholder="john@aylahr.com"
                 />
               </div>
               <div className="space-y-2">
                 <label>{t('employees.department')}</label>
-                <Select value={newEmployee.department} onValueChange={(val) => setNewEmployee({...newEmployee, department: val})}>
+                <Select value={newEmployee.department_id} onValueChange={(val) => setNewEmployee({...newEmployee, department_id: val})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
+                    <SelectValue placeholder={t('employees.selectDepartment')} />
                   </SelectTrigger>
                   <SelectContent>
                     {departments.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <label>{t('employees.position')}</label>
-                <Select value={newEmployee.position} onValueChange={(val) => setNewEmployee({...newEmployee, position: val})}>
+                <Select value={newEmployee.position_id} onValueChange={(val) => setNewEmployee({...newEmployee, position_id: val})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
+                    <SelectValue placeholder={t('employees.selectPosition')} />
                   </SelectTrigger>
                   <SelectContent>
                     {positions.map(pos => (
-                      <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                      <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -231,7 +309,6 @@ export default function EmployeesPage() {
                 <TableHead>{t('employees.department')}</TableHead>
                 <TableHead>{t('employees.position')}</TableHead>
                 <TableHead>{t('employees.status')}</TableHead>
-                <TableHead>{t('employees.joinDate')}</TableHead>
                 <TableHead className="text-right">{t('employees.actions')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -241,24 +318,23 @@ export default function EmployeesPage() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.department}</TableCell>
-                    <TableCell>{employee.position}</TableCell>
+                    <TableCell>{getDepartmentName(employee.department_id)}</TableCell>
+                    <TableCell>{getPositionName(employee.position_id)}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        employee.status === 'active' 
+                        employee.is_active 
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {employee.status}
+                        {employee.is_active ? 'active' : 'inactive'}
                       </span>
                     </TableCell>
-                    <TableCell>{employee.joinDate}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => handleEditEmployee(employee)}
+                          onClick={() => setEditingEmployee(employee)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -275,7 +351,7 @@ export default function EmployeesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {t('employees.noResults')}
                   </TableCell>
                 </TableRow>
@@ -309,39 +385,32 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <label>{t('employees.department')}</label>
-                <Select value={editingEmployee.department} onValueChange={(val) => setEditingEmployee({...editingEmployee, department: val})}>
+                <Select 
+                  value={editingEmployee.department_id?.toString() || ''} 
+                  onValueChange={(val) => setEditingEmployee({...editingEmployee, department_id: parseInt(val)})}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {departments.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <label>{t('employees.position')}</label>
-                <Select value={editingEmployee.position} onValueChange={(val) => setEditingEmployee({...editingEmployee, position: val})}>
+                <Select 
+                  value={editingEmployee.position_id?.toString() || ''} 
+                  onValueChange={(val) => setEditingEmployee({...editingEmployee, position_id: parseInt(val)})}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {positions.map(pos => (
-                      <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label>{t('employees.status')}</label>
-                <Select value={editingEmployee.status} onValueChange={(val) => setEditingEmployee({...editingEmployee, status: val})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map(status => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                      <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -350,7 +419,7 @@ export default function EmployeesPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingEmployee(null)}>{t('employees.cancel')}</Button>
-            <Button onClick={handleSaveEdit}>{t('employees.save')}</Button>
+            <Button onClick={handleEditEmployee}>{t('employees.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
