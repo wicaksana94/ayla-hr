@@ -26,34 +26,48 @@ pub struct ListEmployeesQuery {
     department_id: Option<i32>,
     position_id: Option<i32>,
     search: Option<String>,
+    page: Option<i32>,
+    limit: Option<i32>,
 }
 
 pub async fn list_employees(
     State(pool): State<PgPool>,
     Query(params): Query<ListEmployeesQuery>,
-) -> Json<Vec<User>> {
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1).max(1);
+    let limit = params.limit.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * limit;
+
     let query = if params.search.is_some() {
         let search = params.search.unwrap();
         sqlx::query_as::<_, User>(
             "SELECT id, clerk_id, email, name, role, department_id, position_id, language, is_active 
              FROM users 
              WHERE name LIKE $1 OR email LIKE $1
-             ORDER BY name"
+             ORDER BY name LIMIT $2 OFFSET $3"
         )
         .bind(format!("%{}%", search))
+        .bind(limit)
+        .bind(offset)
     } else {
         sqlx::query_as::<_, User>(
             "SELECT id, clerk_id, email, name, role, department_id, position_id, language, is_active 
              FROM users 
-             ORDER BY name"
+             ORDER BY name LIMIT $1 OFFSET $2"
         )
+        .bind(limit)
+        .bind(offset)
     };
     
     match query.fetch_all(&pool).await {
-        Ok(users) => Json(users),
+        Ok(users) => Json(serde_json::json!({
+            "data": users,
+            "page": page,
+            "limit": limit
+        })),
         Err(e) => {
             eprintln!("Error fetching employees: {}", e);
-            Json(vec![])
+            Json(serde_json::json!({"error": "Failed to fetch employees", "details": e.to_string()}))
         }
     }
 }
@@ -79,6 +93,17 @@ pub async fn create_employee(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateEmployeeRequest>,
 ) -> Result<Json<User>, (StatusCode, String)> {
+    // Basic validation
+    if payload.email.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Email is required".to_string()));
+    }
+    if payload.name.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Name is required".to_string()));
+    }
+    if !payload.email.contains('@') {
+        return Err((StatusCode::BAD_REQUEST, "Invalid email format".to_string()));
+    }
+    
     let role = payload.role.unwrap_or_else(|| "employee".to_string());
     
     match sqlx::query_as::<_, User>(
@@ -87,8 +112,8 @@ pub async fn create_employee(
          RETURNING id, clerk_id, email, name, role, department_id, position_id, language, is_active"
     )
     .bind(payload.clerk_id)
-    .bind(payload.email)
-    .bind(payload.name)
+    .bind(payload.email.trim())
+    .bind(payload.name.trim())
     .bind(role)
     .bind(payload.department_id)
     .bind(payload.position_id)
@@ -163,13 +188,21 @@ pub async fn create_department(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateDepartmentRequest>,
 ) -> Result<Json<Department>, (StatusCode, String)> {
+    // Basic validation
+    if payload.name.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Department name is required".to_string()));
+    }
+    if payload.code.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Department code is required".to_string()));
+    }
+
     match sqlx::query_as::<_, Department>(
         "INSERT INTO departments (name, code)
          VALUES ($1, $2)
          RETURNING id, name, code"
     )
-    .bind(payload.name)
-    .bind(payload.code)
+    .bind(payload.name.trim())
+    .bind(payload.code.trim().to_uppercase())
     .fetch_one(&pool)
     .await
     {
@@ -215,19 +248,47 @@ pub async fn delete_department(
 
 // ============ Position Handlers ============
 
+#[derive(Debug, Deserialize)]
+pub struct ListPositionsQuery {
+    department_id: Option<i32>,
+    page: Option<i32>,
+    limit: Option<i32>,
+}
+
 pub async fn list_positions(
     State(pool): State<PgPool>,
-) -> Json<Vec<Position>> {
-    match sqlx::query_as::<_, Position>(
-        "SELECT id, name, departements FROM positions ORDER BY name"
-    )
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(positions) => Json(positions),
+    Query(params): Query<ListPositionsQuery>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1).max(1);
+    let limit = params.limit.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * limit;
+
+    let query = if let Some(dept_id) = params.department_id {
+        sqlx::query_as::<_, Position>(
+            "SELECT id, name, department_id, level, access_level 
+             FROM positions WHERE department_id = $1 ORDER BY name LIMIT $2 OFFSET $3"
+        )
+        .bind(dept_id)
+        .bind(limit)
+        .bind(offset)
+    } else {
+        sqlx::query_as::<_, Position>(
+            "SELECT id, name, department_id, level, access_level 
+             FROM positions ORDER BY name LIMIT $1 OFFSET $2"
+        )
+        .bind(limit)
+        .bind(offset)
+    };
+    
+    match query.fetch_all(&pool).await {
+        Ok(positions) => Json(serde_json::json!({
+            "data": positions,
+            "page": page,
+            "limit": limit
+        })),
         Err(e) => {
             eprintln!("Error fetching positions: {}", e);
-            Json(vec![])
+            Json(serde_json::json!({"error": "Failed to fetch positions", "details": e.to_string()}))
         }
     }
 }
@@ -236,13 +297,20 @@ pub async fn create_position(
     State(pool): State<PgPool>,
     Json(payload): Json<CreatePositionRequest>,
 ) -> Result<Json<Position>, (StatusCode, String)> {
+    // Basic validation
+    if payload.name.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Position name is required".to_string()));
+    }
+
     match sqlx::query_as::<_, Position>(
-        "INSERT INTO positions (name, departements)
-         VALUES ($1, $2)
-         RETURNING id, name, departements"
+        "INSERT INTO positions (name, department_id, level, access_level)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, department_id, level, access_level"
     )
-    .bind(payload.name)
-    .bind(payload.departements)
+    .bind(payload.name.trim())
+    .bind(payload.department_id)
+    .bind(payload.level)
+    .bind(payload.access_level)
     .fetch_one(&pool)
     .await
     {
@@ -287,35 +355,51 @@ pub async fn list_leave_types(
 pub struct ListLeavesQuery {
     user_id: Option<i32>,
     status: Option<String>,
+    page: Option<i32>,
+    limit: Option<i32>,
 }
 
 pub async fn list_leaves(
     State(pool): State<PgPool>,
     Query(params): Query<ListLeavesQuery>,
-) -> Json<Vec<Leave>> {
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1).max(1);
+    let limit = params.limit.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * limit;
+
     let query = if let (Some(user_id), Some(status)) = (params.user_id, params.status) {
         sqlx::query_as::<_, Leave>(
             "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC"
+             FROM leaves WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         )
         .bind(user_id)
         .bind(status)
+        .bind(limit)
+        .bind(offset)
     } else if let Some(user_id) = params.user_id {
         sqlx::query_as::<_, Leave>(
             "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves WHERE user_id = $1 ORDER BY created_at DESC"
+             FROM leaves WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         )
         .bind(user_id)
+        .bind(limit)
+        .bind(offset)
     } else {
         sqlx::query_as::<_, Leave>(
             "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves ORDER BY created_at DESC"
+             FROM leaves ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
+        .bind(limit)
+        .bind(offset)
     };
     
     match query.fetch_all(&pool).await {
-        Ok(leaves) => Json(leaves),
-        Err(e) => Json(vec![]),
+        Ok(leaves) => Json(serde_json::json!({
+            "data": leaves,
+            "page": page,
+            "limit": limit
+        })),
+        Err(e) => Json(serde_json::json!({"error": "Failed to fetch leaves", "details": e.to_string()})),
     }
 }
 
@@ -323,15 +407,23 @@ pub async fn create_leave(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateLeaveRequest>,
 ) -> Result<Json<Leave>, (StatusCode, String)> {
+    // Basic validation
+    if payload.leave_type.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Leave type is required".to_string()));
+    }
+    if payload.start_date.trim().is_empty() || payload.end_date.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Start and end dates are required".to_string()));
+    }
+
     match sqlx::query_as::<_, Leave>(
         "INSERT INTO leaves (user_id, leave_type, start_date, end_date, total_days, reason, status)
          VALUES ($1, $2, $3, $4, $5, $6, 'pending')
          RETURNING id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at"
     )
     .bind(payload.user_id)
-    .bind(payload.leave_type)
-    .bind(payload.start_date)
-    .bind(payload.end_date)
+    .bind(payload.leave_type.trim())
+    .bind(payload.start_date.trim())
+    .bind(payload.end_date.trim())
     .bind(payload.total_days)
     .bind(payload.reason)
     .fetch_one(&pool)

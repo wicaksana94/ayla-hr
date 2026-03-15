@@ -6,6 +6,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::env;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
 mod handlers;
@@ -23,18 +24,26 @@ async fn main() {
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
 
-    // Create database connection pool
+    // Create database connection pool (increased from 5 to 20)
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(20)
+        .min_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(30))
         .connect(&database_url)
         .await
         .expect("Failed to create pool");
 
     println!("Connected to database!");
 
-    // CORS configuration
+    // CORS configuration - use environment variable for allowed origins
+    let allowed_origins: Vec<&str> = env::var("ALLOWED_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string())
+        .split(',')
+        .map(|s| s.trim())
+        .collect();
+
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(allowed_origins.iter().map(|s| s.parse().unwrap()).collect::<Vec<_>>())
         .allow_methods(Any)
         .allow_headers(Any);
 
@@ -70,6 +79,7 @@ async fn main() {
         .route("/api/leaves/:id/status", put(handlers::update_leave_status))
         
         .layer(cors)
+        .layer(TraceLayer::new_for_http())
         .with_state(pool);
 
     let port = env::var("PORT")

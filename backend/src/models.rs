@@ -25,7 +25,9 @@ pub struct Department {
 pub struct Position {
     pub id: i32,
     pub name: String,
-    pub departements: Option<String>,
+    pub department_id: Option<i32>,
+    pub level: Option<i32>,
+    pub access_level: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -80,8 +82,6 @@ mod tests {
             id: 1,
             name: "Engineering".to_string(),
             code: Some("ENG".to_string()),
-            description: Some("Engineering Department".to_string()),
-            is_active: true,
         };
         
         let json = serde_json::to_string(&dept).unwrap();
@@ -108,7 +108,6 @@ mod tests {
         let req = CreateDepartmentRequest {
             name: "Finance".to_string(),
             code: "FIN".to_string(),
-            description: Some("Finance Department".to_string()),
         };
         
         assert_eq!(req.name, "Finance");
@@ -119,7 +118,7 @@ mod tests {
     fn test_create_position_request() {
         let req = CreatePositionRequest {
             name: "Senior Engineer".to_string(),
-            department_id: 1,
+            department_id: Some(1),
             level: Some(3),
             access_level: Some("manage_team".to_string()),
         };
@@ -194,7 +193,7 @@ mod tests {
         let pos = Position {
             id: 1,
             name: "Test Position".to_string(),
-            departements: Some("1".to_string()),
+            department_id: Some(1),
             level: Some(1),
             access_level: Some("own_only".to_string()),
         };
@@ -228,8 +227,6 @@ mod tests {
             id: 1,
             name: "Test".to_string(),
             code: Some("TST".to_string()),
-            description: None,
-            is_active: true,
         };
         
         let json = serde_json::to_string(&dept).unwrap();
@@ -274,7 +271,9 @@ pub struct UpdateDepartmentRequest {
 #[derive(Debug, Deserialize)]
 pub struct CreatePositionRequest {
     pub name: String,
-    pub departements: String, // Using departements as per user's schema
+    pub department_id: Option<i32>,
+    pub level: Option<i32>,
+    pub access_level: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
