@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
   Table, 
@@ -27,8 +27,6 @@ interface Department {
   id: number;
   name: string;
   code: string | null;
-  description: string | null;
-  is_active: boolean;
 }
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
@@ -40,16 +38,12 @@ export default function DepartmentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
-  const [newDepartment, setNewDepartment] = useState({
-    name: '',
-    code: '',
-    description: '',
-  });
+  const [newDepartment, setNewDepartment] = useState({ name: '', code: '' });
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { departments: { title: 'Departments', subtitle: 'Manage departments', addDepartment: 'Add Department', search: 'Search departments...', name: 'Name', code: 'Code', description: 'Description', status: 'Status', actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure?', noResults: 'No departments found', loading: 'Loading...' }},
-      id: { departments: { title: 'Departemen', subtitle: 'Kelola departemen', addDepartment: 'Tambah Departemen', search: 'Cari departemen...', name: 'Nama', code: 'Kode', description: 'Deskripsi', status: 'Status', actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin?', noResults: 'Departemen tidak ditemukan', loading: 'Memuat...' }}
+      en: { departments: { title: 'Departments', subtitle: 'Manage departments', addDepartment: 'Add Department', search: 'Search departments...', name: 'Name', code: 'Code', actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure?', noResults: 'No departments found', loading: 'Loading...' }},
+      id: { departments: { title: 'Departemen', subtitle: 'Kelola departemen', addDepartment: 'Tambah Departemen', search: 'Cari departemen...', name: 'Nama', code: 'Kode', actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin?', noResults: 'Departemen tidak ditemukan', loading: 'Memuat...' }}
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -68,9 +62,7 @@ export default function DepartmentsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
+  useEffect(() => { fetchDepartments(); }, []);
 
   const filteredDepartments = departments.filter(dept => 
     dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,11 +76,10 @@ export default function DepartmentsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newDepartment),
       });
-      
       if (res.ok) {
         await fetchDepartments();
         setIsAddDialogOpen(false);
-        setNewDepartment({ name: '', code: '', description: '' });
+        setNewDepartment({ name: '', code: '' });
       }
     } catch (error) {
       console.error('Error creating department:', error);
@@ -97,18 +88,12 @@ export default function DepartmentsPage() {
 
   const handleEditDepartment = async () => {
     if (!editingDepartment) return;
-    
     try {
       const res = await fetch(`${apiUrl}/api/departments/${editingDepartment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editingDepartment.name,
-          code: editingDepartment.code,
-          description: editingDepartment.description,
-        }),
+        body: JSON.stringify({ name: editingDepartment.name, code: editingDepartment.code }),
       });
-      
       if (res.ok) {
         await fetchDepartments();
         setEditingDepartment(null);
@@ -120,15 +105,9 @@ export default function DepartmentsPage() {
 
   const handleDeleteDepartment = async (id: number) => {
     if (!confirm(t('departments.confirmDelete'))) return;
-    
     try {
-      const res = await fetch(`${apiUrl}/api/departments/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (res.ok) {
-        await fetchDepartments();
-      }
+      const res = await fetch(`${apiUrl}/api/departments/${id}`, { method: 'DELETE' });
+      if (res.ok) await fetchDepartments();
     } catch (error) {
       console.error('Error deleting department:', error);
     }
@@ -152,10 +131,7 @@ export default function DepartmentsPage() {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              {t('departments.addDepartment')}
-            </Button>
+            <Button><Plus className="w-4 h-4 mr-2" />{t('departments.addDepartment')}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -164,27 +140,11 @@ export default function DepartmentsPage() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <label>{t('departments.name')}</label>
-                <Input 
-                  value={newDepartment.name} 
-                  onChange={(e) => setNewDepartment({...newDepartment, name: e.target.value})}
-                  placeholder="Human Resources"
-                />
+                <Input value={newDepartment.name} onChange={(e) => setNewDepartment({...newDepartment, name: e.target.value})} placeholder="Human Resources" />
               </div>
               <div className="space-y-2">
                 <label>{t('departments.code')}</label>
-                <Input 
-                  value={newDepartment.code} 
-                  onChange={(e) => setNewDepartment({...newDepartment, code: e.target.value})}
-                  placeholder="HR"
-                />
-              </div>
-              <div className="space-y-2">
-                <label>{t('departments.description')}</label>
-                <Input 
-                  value={newDepartment.description} 
-                  onChange={(e) => setNewDepartment({...newDepartment, description: e.target.value})}
-                  placeholder="HR Department"
-                />
+                <Input value={newDepartment.code} onChange={(e) => setNewDepartment({...newDepartment, code: e.target.value})} placeholder="HR" />
               </div>
             </div>
             <DialogFooter>
@@ -198,12 +158,7 @@ export default function DepartmentsPage() {
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder={t('departments.search')} 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder={t('departments.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
         </div>
       </div>
 
@@ -214,8 +169,6 @@ export default function DepartmentsPage() {
               <TableRow>
                 <TableHead>{t('departments.name')}</TableHead>
                 <TableHead>{t('departments.code')}</TableHead>
-                <TableHead>{t('departments.description')}</TableHead>
-                <TableHead>{t('departments.status')}</TableHead>
                 <TableHead className="text-right">{t('departments.actions')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -225,31 +178,17 @@ export default function DepartmentsPage() {
                   <TableRow key={dept.id}>
                     <TableCell className="font-medium">{dept.name}</TableCell>
                     <TableCell>{dept.code || '-'}</TableCell>
-                    <TableCell>{dept.description || '-'}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        dept.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {dept.is_active ? 'active' : 'inactive'}
-                      </span>
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => setEditingDepartment(dept)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDepartment(dept.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setEditingDepartment(dept)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDepartment(dept.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    {t('departments.noResults')}
-                  </TableCell>
+                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">{t('departments.noResults')}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -266,24 +205,11 @@ export default function DepartmentsPage() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <label>{t('departments.name')}</label>
-                <Input 
-                  value={editingDepartment.name} 
-                  onChange={(e) => setEditingDepartment({...editingDepartment, name: e.target.value})}
-                />
+                <Input value={editingDepartment.name} onChange={(e) => setEditingDepartment({...editingDepartment, name: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <label>{t('departments.code')}</label>
-                <Input 
-                  value={editingDepartment.code || ''} 
-                  onChange={(e) => setEditingDepartment({...editingDepartment, code: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label>{t('departments.description')}</label>
-                <Input 
-                  value={editingDepartment.description || ''} 
-                  onChange={(e) => setEditingDepartment({...editingDepartment, description: e.target.value})}
-                />
+                <Input value={editingDepartment.code || ''} onChange={(e) => setEditingDepartment({...editingDepartment, code: e.target.value})} />
               </div>
             </div>
           )}

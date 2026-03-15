@@ -19,8 +19,6 @@ pub struct Department {
     pub id: i32,
     pub name: String,
     pub code: Option<String>,
-    pub description: Option<String>,
-    pub is_active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -267,15 +265,12 @@ pub struct UpdateEmployeeRequest {
 pub struct CreateDepartmentRequest {
     pub name: String,
     pub code: String,
-    pub description: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateDepartmentRequest {
     pub name: Option<String>,
     pub code: Option<String>,
-    pub description: Option<String>,
-    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]

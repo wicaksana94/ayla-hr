@@ -146,7 +146,7 @@ pub async fn list_departments(
     State(pool): State<PgPool>,
 ) -> Json<Vec<Department>> {
     match sqlx::query_as::<_, Department>(
-        "SELECT id, name, code, description, is_active FROM departments ORDER BY name"
+        "SELECT id, name, code FROM departments ORDER BY name"
     )
     .fetch_all(&pool)
     .await
@@ -164,13 +164,12 @@ pub async fn create_department(
     Json(payload): Json<CreateDepartmentRequest>,
 ) -> Result<Json<Department>, (StatusCode, String)> {
     match sqlx::query_as::<_, Department>(
-        "INSERT INTO departments (name, code, description, is_active)
-         VALUES ($1, $2, $3, true)
-         RETURNING id, name, code, description, is_active"
+        "INSERT INTO departments (name, code)
+         VALUES ($1, $2)
+         RETURNING id, name, code"
     )
     .bind(payload.name)
     .bind(payload.code)
-    .bind(payload.description)
     .fetch_one(&pool)
     .await
     {
@@ -185,15 +184,12 @@ pub async fn update_department(
     Json(payload): Json<UpdateDepartmentRequest>,
 ) -> Result<Json<Department>, (StatusCode, String)> {
     match sqlx::query_as::<_, Department>(
-        "UPDATE departments SET name = COALESCE($1, name), code = COALESCE($2, code), 
-         description = $3, is_active = COALESCE($4, is_active)
-         WHERE id = $5
-         RETURNING id, name, code, description, is_active"
+        "UPDATE departments SET name = COALESCE($1, name), code = COALESCE($2, code)
+         WHERE id = $3
+         RETURNING id, name, code"
     )
     .bind(payload.name)
     .bind(payload.code)
-    .bind(payload.description)
-    .bind(payload.is_active)
     .bind(id)
     .fetch_one(&pool)
     .await
