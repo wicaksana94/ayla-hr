@@ -28,7 +28,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
 
 interface Employee {
   id: number;
@@ -66,6 +66,7 @@ export default function EmployeesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
   const [newEmployee, setNewEmployee] = useState({
     clerk_id: '',
     name: '',
@@ -73,6 +74,7 @@ export default function EmployeesPage() {
     department_id: '',
     position_id: '',
   });
+  const [error, setError] = useState<string | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
@@ -80,7 +82,7 @@ export default function EmployeesPage() {
         employees: { 
           title: 'Employees', subtitle: 'Manage employee data', addEmployee: 'Add Employee', search: 'Search employees...', 
           name: 'Name', email: 'Email', department: 'Department', position: 'Position', status: 'Status', joinDate: 'Join Date', 
-          actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete this employee?',
+          actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete', confirmDeleteDesc: 'This action cannot be undone.',
           noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', selectDepartmentFirst: 'Select Department First', clerkId: 'Clerk ID', loading: 'Loading...', noPositionAvailable: 'No positions available', addPosition: 'Add Position'
         }
       },
@@ -88,7 +90,7 @@ export default function EmployeesPage() {
         employees: { 
           title: 'Karyawan', subtitle: 'Kelola data karyawan', addEmployee: 'Tambah Karyawan', search: 'Cari karyawan...', 
           name: 'Nama', email: 'Email', department: 'Departemen', position: 'Posisi', status: 'Status', joinDate: 'Tanggal Masuk', 
-          actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus karyawan ini?',
+          actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus', confirmDeleteDesc: 'Tindakan ini tidak dapat dibatalkan.',
           noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', selectDepartmentFirst: 'Pilih Departemen Dulu', clerkId: 'Clerk ID', loading: 'Memuat...', noPositionAvailable: 'Tidak ada posisi', addPosition: 'Tambah Posisi'
         }
       }
@@ -202,20 +204,17 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleDeleteEmployee = async (id: number) => {
-    if (!confirm(t('employees.confirmDelete'))) return;
-    
+  const handleDeleteEmployee = async () => {
+    if (!deletingEmployee) return;
+    setError(null);
     try {
-      const res = await fetch(`${apiUrl}/api/employees/${id}`, {
+      const res = await fetch(`${apiUrl}/api/employees/${deletingEmployee.id}`, {
         method: 'DELETE',
       });
-      
-      if (res.ok) {
-        await fetchData();
-      }
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-    }
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
+      await fetchData();
+      setDeletingEmployee(null);
+    } catch (err: any) { console.error('Error deleting employee:', err); setError(err.message); }
   };
 
   if (isLoading) {
@@ -369,7 +368,7 @@ export default function EmployeesPage() {
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => handleDeleteEmployee(employee.id)}
+                          onClick={() => setDeletingEmployee(employee)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -451,6 +450,27 @@ export default function EmployeesPage() {
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('employees.save')}
               </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingEmployee} onOpenChange={() => setDeletingEmployee(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              {t('employees.confirmDelete')} "{deletingEmployee?.name}"?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground py-2">{t('employees.confirmDeleteDesc')}</p>
+          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
+          <DialogFooter className="sm:justify-end">
+            <Button variant="outline" onClick={() => setDeletingEmployee(null)}>{t('employees.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDeleteEmployee} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('employees.delete')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

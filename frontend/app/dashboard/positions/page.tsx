@@ -25,13 +25,14 @@ function PositionsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deletingPosition, setDeletingPosition] = useState<Position | null>(null);
   const [newPosition, setNewPosition] = useState({ name: '', department_id: '' });
   const [error, setError] = useState<string | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure?', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department', nameRequired: 'Name is required' }},
-      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Yakin?', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen', nameRequired: 'Nama wajib diisi' }}
+      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete', confirmDeleteDesc: 'This action cannot be undone.', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department', nameRequired: 'Name is required' }},
+      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus', confirmDeleteDesc: 'Tindakan ini tidak dapat dibatalkan.', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen', nameRequired: 'Nama wajib diisi' }}
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -45,20 +46,13 @@ function PositionsContent() {
         fetch(`${apiUrl}/api/positions`),
         fetch(`${apiUrl}/api/departments`),
       ]);
-      
       if (!posRes.ok) throw new Error('Failed to fetch positions');
       if (!deptRes.ok) throw new Error('Failed to fetch departments');
-      
       const posData = await posRes.json();
       const deptData = await deptRes.json();
-      
-      // Handle paginated response
       setPositions(posData.data || posData);
       setDepartments(deptData);
-    } catch (err: any) { 
-      console.error('Error:', err);
-      setError(err.message);
-    }
+    } catch (err: any) { console.error('Error:', err); setError(err.message); }
     finally { setIsLoading(false); }
   };
 
@@ -80,52 +74,33 @@ function PositionsContent() {
 
   const handleAdd = async () => {
     setError(null);
-    
-    if (!newPosition.name.trim()) {
-      setError(t('positions.nameRequired'));
-      return;
-    }
-
+    if (!newPosition.name.trim()) { setError(t('positions.nameRequired')); return; }
     setIsSaving(true);
     try {
       const res = await fetch(`${apiUrl}/api/positions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name: newPosition.name, 
-          department_id: newPosition.department_id ? parseInt(newPosition.department_id) : null 
-        }),
+        body: JSON.stringify({ name: newPosition.name, department_id: newPosition.department_id ? parseInt(newPosition.department_id) : null }),
       });
-      
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || `Error: ${res.status}`);
-      }
-      
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
       await fetchData(); 
       setIsAddDialogOpen(false); 
       setNewPosition({ name: '', department_id: '' });
-    } catch (err: any) { 
-      console.error('Error:', err);
-      setError(err.message);
-    }
+    } catch (err: any) { setError(err.message); }
     finally { setIsSaving(false); }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm(t('positions.confirmDelete'))) return;
+  const handleDelete = async () => {
+    if (!deletingPosition) return;
     setError(null);
+    setIsSaving(true);
     try {
-      const res = await fetch(`${apiUrl}/api/positions/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || `Error: ${res.status}`);
-      }
+      const res = await fetch(`${apiUrl}/api/positions/${deletingPosition.id}`, { method: 'DELETE' });
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
       await fetchData();
-    } catch (err: any) { 
-      console.error('Error:', err);
-      setError(err.message);
-    }
+      setDeletingPosition(null);
+    } catch (err: any) { setError(err.message); }
+    finally { setIsSaving(false); }
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /><span className="ml-2">{t('positions.loading')}</span></div>;
@@ -156,7 +131,7 @@ function PositionsContent() {
         </Dialog>
       </div>
 
-      {error && !isAddDialogOpen && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
+      {error && !isAddDialogOpen && !deletingPosition && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700"><AlertCircle className="h-4 w-4" />{error}</div>}
 
       <div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('positions.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" /></div>
 
@@ -166,12 +141,33 @@ function PositionsContent() {
           <TableBody>
             {positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
               positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pos) => (
-                <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete(pos.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setDeletingPosition(pos)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
               ))
             ) : (<TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">{t('positions.noResults')}</TableCell></TableRow>)}
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingPosition} onOpenChange={() => { setDeletingPosition(null); setError(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              {t('positions.confirmDelete')} "{deletingPosition?.name}"?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground py-2">{t('positions.confirmDeleteDesc')}</p>
+          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
+          <DialogFooter className="sm:justify-end">
+            <Button variant="outline" onClick={() => { setDeletingPosition(null); setError(null); }}>{t('positions.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('positions.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
