@@ -51,6 +51,7 @@ interface Department {
 interface Position {
   id: number;
   name: string;
+  departements: string | null;
 }
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
@@ -80,7 +81,7 @@ export default function EmployeesPage() {
           title: 'Employees', subtitle: 'Manage employee data', addEmployee: 'Add Employee', search: 'Search employees...', 
           name: 'Name', email: 'Email', department: 'Department', position: 'Position', status: 'Status', joinDate: 'Join Date', 
           actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete this employee?',
-          noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', clerkId: 'Clerk ID', loading: 'Loading...'
+          noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', selectDepartmentFirst: 'Select Department First', clerkId: 'Clerk ID', loading: 'Loading...'
         }
       },
       id: { 
@@ -88,7 +89,7 @@ export default function EmployeesPage() {
           title: 'Karyawan', subtitle: 'Kelola data karyawan', addEmployee: 'Tambah Karyawan', search: 'Cari karyawan...', 
           name: 'Nama', email: 'Email', department: 'Departemen', position: 'Posisi', status: 'Status', joinDate: 'Tanggal Masuk', 
           actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus karyawan ini?',
-          noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', clerkId: 'Clerk ID', loading: 'Memuat...'
+          noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', selectDepartmentFirst: 'Pilih Departemen Dulu', clerkId: 'Clerk ID', loading: 'Memuat...'
         }
       }
     };
@@ -140,6 +141,10 @@ export default function EmployeesPage() {
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const filteredPositions = newEmployee.department_id 
+    ? positions.filter(p => p.departements === newEmployee.department_id)
+    : [];
 
   const handleAddEmployee = async () => {
     setIsSaving(true);
@@ -272,12 +277,12 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <label>{t('employees.position')}</label>
-                <Select value={newEmployee.position_id} onValueChange={(val) => setNewEmployee({...newEmployee, position_id: val})}>
+                <Select value={newEmployee.position_id} onValueChange={(val) => setNewEmployee({...newEmployee, position_id: val})} disabled={!newEmployee.department_id}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('employees.selectPosition')} />
+                    <SelectValue placeholder={!newEmployee.department_id ? t('employees.selectDepartmentFirst') : t('employees.selectPosition')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {positions.map(pos => (
+                    {filteredPositions.map(pos => (
                       <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
                     ))}
                   </SelectContent>
