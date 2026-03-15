@@ -102,6 +102,7 @@ export default function EmployeesPage() {
   // Fetch data from API
   const fetchData = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const [empRes, deptRes, posRes] = await Promise.all([
         fetch(`${apiUrl}/api/employees`),
@@ -109,16 +110,21 @@ export default function EmployeesPage() {
         fetch(`${apiUrl}/api/positions`),
       ]);
       
+      if (!empRes.ok) throw new Error('Failed to fetch employees');
+      if (!deptRes.ok) throw new Error('Failed to fetch departments');
+      if (!posRes.ok) throw new Error('Failed to fetch positions');
+      
       const empData = await empRes.json();
       const deptData = await deptRes.json();
       const posData = await posRes.json();
       
       // Handle paginated or direct array response
-      setEmployees(empData.data || empData);
-      setDepartments(deptData);
-      setPositions(posData.data || posData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+      setEmployees(empData.data || empData || []);
+      setDepartments(deptData || []);
+      setPositions(posData.data || posData || []);
+    } catch (err: any) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -140,13 +146,13 @@ export default function EmployeesPage() {
     return pos?.name || '-';
   };
 
-  const filteredEmployees = employees.filter(emp => 
+  const filteredEmployees = (employees || []).filter(emp => 
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredPositions = newEmployee.department_id 
-    ? positions.filter(p => p.department_id?.toString() === newEmployee.department_id)
+    ? (positions || []).filter(p => p.department_id?.toString() === newEmployee.department_id)
     : [];
 
   const handleAddEmployee = async () => {
