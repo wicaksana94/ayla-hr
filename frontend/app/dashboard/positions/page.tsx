@@ -51,6 +51,7 @@ export default function PositionsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newPosition, setNewPosition] = useState({
     name: '',
@@ -103,6 +104,7 @@ export default function PositionsPage() {
   );
 
   const handleAddPosition = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch(`${apiUrl}/api/positions`, {
         method: 'POST',
@@ -229,7 +231,7 @@ export default function PositionsPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('positions.cancel')}</Button>
-              <Button onClick={handleAddPosition}>{t('positions.save')}</Button>
+              <Button onClick={handleAddPosition} disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('positions.save')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
