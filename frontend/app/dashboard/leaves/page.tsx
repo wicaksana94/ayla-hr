@@ -1,20 +1,157 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  Loader2,
+  Filter
+} from "lucide-react";
+import { getLeaves, updateLeaveStatus, Leave, LeaveType } from '@/lib/api/leaves';
+import { getLeaveTypes } from '@/lib/api/leaves';
+import { useUser } from '@clerk/nextjs';
+
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  approved: 'bg-green-100 text-green-700', 
+  rejected: 'bg-red-100 text-red-700',
+};
+
+const statusLabels: Record<string, Record<string, string>> = {
+  en: { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' },
+  id: { pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' },
+  es: { pending: 'Pendiente', approved: 'Aprobado', rejected: 'Rechazado' },
+  zh: { pending: '待处理', approved: '已批准', rejected: '已拒绝' },
+};
 
 export default function LeavesPage() {
   const { language } = useI18n();
-  
+  const { user } = useUser();
+  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [processingId, setProcessingId] = useState<number | null>(null);
+
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { leaves: { title: 'Leave Requests', subtitle: 'Manage and submit leave requests', newRequest: 'New Request', recent: 'Recent Leave Requests', comingSoon: 'Leave management interface coming soon...' }},
-      id: { leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola dan ajukan permintaan cuti', newRequest: 'Permintaan Baru', recent: 'Permintaan Cuti Terbaru', comingSoon: 'Antarmuka manajemen cuti akan segera hadir...' }},
-      es: { leaves: { title: 'Solicitudes de Permiso', subtitle: 'Gestionar y enviar solicitudes de permiso', newRequest: 'Nueva Solicitud', recent: 'Solicitudes Recientes', comingSoon: 'Interfaz de gestión de permisoscoming soon...' }},
-      zh: { leaves: { title: '请假申请', subtitle: '管理和提交请假申请', newRequest: '新申请', recent: '最近请假申请', comingSoon: '请假管理界面即将推出...' }}
+      en: { 
+        leaves: { 
+          title: 'Leave Requests', 
+          subtitle: 'Manage employee leave requests',
+          filter: 'Filter by status',
+          all: 'All',
+          noRequests: 'No leave requests found',
+          approve: 'Approve',
+          reject: 'Reject',
+          processing: 'Processing...'
+        } 
+      },
+      id: { 
+        leaves: { 
+          title: 'Permintaan Cuti', 
+          subtitle: 'Kelola permintaan cuti karyawan',
+          filter: 'Filter berdasarkan status',
+          all: 'Semua',
+          noRequests: 'Tidak ada permintaan cuti',
+          approve: 'Setuju',
+          reject: 'Tolak',
+          processing: 'Memproses...'
+        } 
+      },
+      es: { 
+        leaves: { 
+          title: 'Solicitudes de Permiso', 
+          subtitle: 'Gestionar solicitudes de permiso de empleados',
+          filter: 'Filtrar por estado',
+          all: 'Todos',
+          noRequests: 'No se encontraron solicitudes de permiso',
+          approve: 'Aprobar',
+          reject: 'Rechazar',
+          processing: 'Procesando...'
+        } 
+      },
+      zh: { 
+        leaves: { 
+          title: '请假申请', 
+          subtitle: '管理员工请假申请',
+          filter: '按状态筛选',
+          all: '全部',
+          noRequests: '未找到请假申请',
+          approve: '批准',
+          reject: '拒绝',
+          processing: '处理中...'
+        } 
+      },
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
+  };
+
+  const fetchLeaves = async () => {
+    try {
+      const params: any = { page: 1, limit: 100 };
+      if (filterStatus !== 'all') params.status = filterStatus;
+      const data = await getLeaves(params);
+      setLeaves(data.data);
+    } catch (error) {
+      console.error('Failed to fetch leaves:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLeaveTypes = async () => {
+    try {
+      const data = await getLeaveTypes();
+      setLeaveTypes(data);
+    } catch (error) {
+      console.error('Failed to fetch leave types:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaves();
+    fetchLeaveTypes();
+  }, [filterStatus]);
+
+  const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
+    setProcessingId(id);
+    try {
+      // In production, get the manager's user ID from auth
+      const approvedBy = 1; 
+      await updateLeaveStatus(id, status, approvedBy);
+      await fetchLeaves();
+    } catch (error) {
+      console.error('Failed to update leave status:', error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const getLeaveTypeName = (code: string) => {
+    const type = leaveTypes.find(t => t.code === code);
+    return type?.name || code;
   };
 
   return (
@@ -24,12 +161,108 @@ export default function LeavesPage() {
         <p className="text-muted-foreground">{t('leaves.subtitle')}</p>
       </div>
 
+      {/* Filter */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{t('leaves.filter')}:</span>
+        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('leaves.all')}</SelectItem>
+            <SelectItem value="pending">{statusLabels[language]?.pending || 'Pending'}</SelectItem>
+            <SelectItem value="approved">{statusLabels[language]?.approved || 'Approved'}</SelectItem>
+            <SelectItem value="rejected">{statusLabels[language]?.rejected || 'Rejected'}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle>{t('leaves.recent')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{t('leaves.comingSoon')}</p>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : leaves.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              {t('leaves.noRequests')}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Dates</TableHead>
+                  <TableHead>Days</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaves.map((leave) => (
+                  <TableRow key={leave.id}>
+                    <TableCell className="font-medium">User #{leave.user_id}</TableCell>
+                    <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
+                    <TableCell>
+                      {leave.start_date} - {leave.end_date}
+                    </TableCell>
+                    <TableCell>{leave.total_days}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {leave.reason || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[leave.status]}>
+                        {statusLabels[language]?.[leave.status] || leave.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {leave.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => handleStatusUpdate(leave.id, 'approved')}
+                            disabled={processingId === leave.id}
+                          >
+                            {processingId === leave.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                {t('leaves.approve')}
+                              </>
+                            )}
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            onClick={() => handleStatusUpdate(leave.id, 'rejected')}
+                            disabled={processingId === leave.id}
+                          >
+                            {processingId === leave.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 mr-1" />
+                                {t('leaves.reject')}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
