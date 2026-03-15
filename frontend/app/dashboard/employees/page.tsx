@@ -62,6 +62,7 @@ export default function EmployeesPage() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [newEmployee, setNewEmployee] = useState({
@@ -141,6 +142,7 @@ export default function EmployeesPage() {
   );
 
   const handleAddEmployee = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch(`${apiUrl}/api/employees`, {
         method: 'POST',
@@ -161,10 +163,13 @@ export default function EmployeesPage() {
       }
     } catch (error) {
       console.error('Error creating employee:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleEditEmployee = async () => {
+    setIsSaving(true);
     if (!editingEmployee) return;
     
     try {
@@ -186,6 +191,8 @@ export default function EmployeesPage() {
       }
     } catch (error) {
       console.error('Error updating employee:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -279,7 +286,10 @@ export default function EmployeesPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('employees.cancel')}</Button>
-              <Button onClick={handleAddEmployee}>{t('employees.save')}</Button>
+              <Button onClick={handleAddEmployee} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('employees.save')}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -419,7 +429,10 @@ export default function EmployeesPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingEmployee(null)}>{t('employees.cancel')}</Button>
-            <Button onClick={handleEditEmployee}>{t('employees.save')}</Button>
+            <Button onClick={handleEditEmployee} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('employees.save')}
+              </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
