@@ -31,7 +31,7 @@ interface Department {
   is_active: boolean;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 export default function DepartmentsPage() {
   const { language } = useI18n();

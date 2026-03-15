@@ -53,7 +53,7 @@ interface Position {
   name: string;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 export default function EmployeesPage() {
   const { language } = useI18n();

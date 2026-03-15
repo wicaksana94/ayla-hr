@@ -43,7 +43,7 @@ interface Department {
   name: string;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 export default function PositionsPage() {
   const { language } = useI18n();
