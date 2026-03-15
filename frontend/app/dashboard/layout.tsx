@@ -2,10 +2,8 @@
 
 import { Sidebar } from "@/components/sidebar";
 import { Navbar } from "@/components/navbar";
-import { Role } from "@/config/navigation";
+import { useUserRole } from "@/hooks/use-user-role";
 import { useState } from "react";
-
-const DEFAULT_ROLE: Role = 'hr_manager';
 
 export default function DashboardLayout({
   children,
@@ -13,7 +11,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const userRole: Role = DEFAULT_ROLE;
+  const { role: userRole, isLoading } = useUserRole();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
