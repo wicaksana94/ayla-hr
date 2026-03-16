@@ -34,7 +34,7 @@ pub struct Position {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct LeaveType {
     pub id: i32,
-    pub name: String,
+    pub name: Option<String>,
     pub code: String,
     pub is_paid: bool,
     pub annual_limit: i32,
