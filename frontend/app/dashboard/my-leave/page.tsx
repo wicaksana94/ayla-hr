@@ -23,50 +23,6 @@ import { DateRange } from "react-day-picker";
 import { useUser } from '@clerk/nextjs';
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
 
-const leaveTypesEn = [
-  { value: 'annual', label: 'Annual Leave' },
-  { value: 'sick', label: 'Sick Leave' },
-  { value: 'maternity', label: 'Maternity Leave' },
-  { value: 'marriage', label: 'Marriage Leave' },
-  { value: 'bereavement', label: 'Bereavement Leave' },
-  { value: 'baptism', label: 'Baptism/Circumcision Leave' },
-  { value: 'paid_leave', label: 'Paid Leave' },
-  { value: 'unpaid_leave', label: 'Unpaid Leave' },
-];
-
-const leaveTypesId = [
-  { value: 'annual', label: 'Cuti Tahunan' },
-  { value: 'sick', label: 'Cuti Sakit' },
-  { value: 'maternity', label: 'Cuti Melahirkan' },
-  { value: 'marriage', label: 'Cuti Pernikahan' },
-  { value: 'bereavement', label: 'Cuti Kematian' },
-  { value: 'baptism', label: 'Cuti Baptis/Sunatan' },
-  { value: 'paid_leave', label: 'Cuti Berbayar' },
-  { value: 'unpaid_leave', label: 'Cuti Tidak Berbayar' },
-];
-
-const leaveTypesEs = [
-  { value: 'annual', label: 'Permiso Anual' },
-  { value: 'sick', label: 'Permiso por Krankheit' },
-  { value: 'maternity', label: 'Permiso de Maternidad' },
-  { value: 'marriage', label: 'Permiso de Matrimonio' },
-  { value: 'bereavement', label: 'Permiso por Duelo' },
-  { value: 'baptism', label: 'Permiso de Bautizo/Circuncisión' },
-  { value: 'paid_leave', label: 'Permiso Pagado' },
-  { value: 'unpaid_leave', label: 'Permiso No Pagado' },
-];
-
-const leaveTypesZh = [
-  { value: 'annual', label: '年假' },
-  { value: 'sick', label: '病假' },
-  { value: 'maternity', label: '产假' },
-  { value: 'marriage', label: '婚假' },
-  { value: 'bereavement', label: '丧假' },
-  { value: 'baptism', label: '洗礼/割礼假' },
-  { value: 'paid_leave', label: '带薪假' },
-  { value: 'unpaid_leave', label: '无薪假' },
-];
-
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
   approved: 'bg-green-100 text-green-700', 
@@ -84,10 +40,6 @@ export default function MyLeavePage() {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const leaveTypeOptions = language === 'id' ? leaveTypesId : 
-    language === 'es' ? leaveTypesEs : 
-    language === 'zh' ? leaveTypesZh : leaveTypesEn;
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
@@ -275,7 +227,7 @@ export default function MyLeavePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {type.code === 'unpaid' ? '∞' : balances[type.code as keyof typeof balances] || 0}
+                {type.code === 'unpaid_leave' ? '∞' : balances[type.code as keyof typeof balances] || 0}
               </div>
               <p className="text-xs text-muted-foreground">
                 {type.is_paid ? 'Paid' : 'Unpaid'}
