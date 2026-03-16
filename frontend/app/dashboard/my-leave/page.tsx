@@ -26,29 +26,45 @@ import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/a
 const leaveTypesEn = [
   { value: 'annual', label: 'Annual Leave' },
   { value: 'sick', label: 'Sick Leave' },
-  { value: 'paid', label: 'Paid Leave' },
-  { value: 'unpaid', label: 'Unpaid Leave' },
+  { value: 'maternity', label: 'Maternity Leave' },
+  { value: 'marriage', label: 'Marriage Leave' },
+  { value: 'bereavement', label: 'Bereavement Leave' },
+  { value: 'baptism', label: 'Baptism/Circumcision Leave' },
+  { value: 'paid_leave', label: 'Paid Leave' },
+  { value: 'unpaid_leave', label: 'Unpaid Leave' },
 ];
 
 const leaveTypesId = [
   { value: 'annual', label: 'Cuti Tahunan' },
   { value: 'sick', label: 'Cuti Sakit' },
-  { value: 'paid', label: 'Cuti Dibayar' },
-  { value: 'unpaid', label: 'Cuti Tidak Dibayar' },
+  { value: 'maternity', label: 'Cuti Melahirkan' },
+  { value: 'marriage', label: 'Cuti Pernikahan' },
+  { value: 'bereavement', label: 'Cuti Kematian' },
+  { value: 'baptism', label: 'Cuti Baptis/Sunatan' },
+  { value: 'paid_leave', label: 'Cuti Berbayar' },
+  { value: 'unpaid_leave', label: 'Cuti Tidak Berbayar' },
 ];
 
 const leaveTypesEs = [
   { value: 'annual', label: 'Permiso Anual' },
   { value: 'sick', label: 'Permiso por Krankheit' },
-  { value: 'paid', label: 'Permiso Pagado' },
-  { value: 'unpaid', label: 'Permiso No Pagado' },
+  { value: 'maternity', label: 'Permiso de Maternidad' },
+  { value: 'marriage', label: 'Permiso de Matrimonio' },
+  { value: 'bereavement', label: 'Permiso por Duelo' },
+  { value: 'baptism', label: 'Permiso de Bautizo/Circuncisión' },
+  { value: 'paid_leave', label: 'Permiso Pagado' },
+  { value: 'unpaid_leave', label: 'Permiso No Pagado' },
 ];
 
 const leaveTypesZh = [
   { value: 'annual', label: '年假' },
   { value: 'sick', label: '病假' },
-  { value: 'paid', label: '带薪假' },
-  { value: 'unpaid', label: '无薪假' },
+  { value: 'maternity', label: '产假' },
+  { value: 'marriage', label: '婚假' },
+  { value: 'bereavement', label: '丧假' },
+  { value: 'baptism', label: '洗礼/割礼假' },
+  { value: 'paid_leave', label: '带薪假' },
+  { value: 'unpaid_leave', label: '无薪假' },
 ];
 
 const statusColors: Record<string, string> = {
@@ -252,7 +268,7 @@ export default function MyLeavePage() {
 
       {/* Leave Balance Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        {leaveTypes.filter(t => ['annual', 'sick', 'paid', 'unpaid'].includes(t.code)).map((type) => (
+        {leaveTypes.map((type) => (
           <Card key={type.code}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">{type.name}</CardTitle>

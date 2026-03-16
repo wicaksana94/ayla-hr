@@ -110,10 +110,14 @@ CREATE INDEX IF NOT EXISTS idx_departments_code ON departments(code);
 
 -- Insert default leave types
 INSERT INTO leave_types (name, code, is_paid, annual_limit) VALUES
-    ('Annual Leave', 'annual', true, 12),
-    ('Sick Leave', 'sick', true, 10),
-    ('Paid Leave', 'paid', true, 5),
-    ('Unpaid Leave', 'unpaid', false, 0)
+    ('Cuti Tahunan', 'annual', true, 12),
+    ('Cuti Sakit', 'sick', true, 10),
+    ('Cuti Melahirkan', 'maternity', true, 90),
+    ('Cuti Pernikahan', 'marriage', true, 3),
+    ('Cuti Kematian', 'bereavement', true, 3),
+    ('Cuti Baptis/Sunatan', 'baptism', true, 2),
+    ('Cuti Berbayar', 'paid_leave', true, 5),
+    ('Cuti Tidak Berbayar', 'unpaid_leave', false, 0)
 ON CONFLICT (code) DO NOTHING;
 
 -- Insert default departments
