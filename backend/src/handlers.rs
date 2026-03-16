@@ -41,7 +41,7 @@ pub async fn list_employees(
     let query = if params.search.is_some() {
         let search = params.search.unwrap();
         sqlx::query_as::<_, User>(
-            "SELECT id, clerk_id, email, name, role, department_id, position_id, language, is_active 
+            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
              FROM users 
              WHERE name LIKE $1 OR email LIKE $1
              ORDER BY name LIMIT $2 OFFSET $3"
@@ -51,7 +51,7 @@ pub async fn list_employees(
         .bind(offset)
     } else {
         sqlx::query_as::<_, User>(
-            "SELECT id, clerk_id, email, name, role, department_id, position_id, language, is_active 
+            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
              FROM users 
              ORDER BY name LIMIT $1 OFFSET $2"
         )
@@ -77,7 +77,7 @@ pub async fn get_employee(
     Path(id): Path<i32>,
 ) -> Result<Json<User>, (StatusCode, String)> {
     match sqlx::query_as::<_, User>(
-        "SELECT id, clerk_id, email, name, role, department_id, position_id, language, is_active 
+        "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
          FROM users WHERE id = $1"
     )
     .bind(id)
@@ -107,9 +107,9 @@ pub async fn create_employee(
     let role = payload.role.unwrap_or_else(|| "employee".to_string());
     
     match sqlx::query_as::<_, User>(
-        "INSERT INTO users (clerk_id, email, name, role, department_id, position_id, language, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, 'en', true)
-         RETURNING id, clerk_id, email, name, role, department_id, position_id, language, is_active"
+        "INSERT INTO users (clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'en', true)
+         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active"
     )
     .bind(payload.clerk_id)
     .bind(payload.email.trim())
@@ -117,6 +117,7 @@ pub async fn create_employee(
     .bind(role)
     .bind(payload.department_id)
     .bind(payload.position_id)
+    .bind(payload.manager_id)
     .fetch_one(&pool)
     .await
     {
@@ -132,15 +133,16 @@ pub async fn update_employee(
 ) -> Result<Json<User>, (StatusCode, String)> {
     match sqlx::query_as::<_, User>(
         "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), 
-         department_id = $4, position_id = $5, is_active = COALESCE($6, is_active)
-         WHERE id = $7 
-         RETURNING id, clerk_id, email, name, role, department_id, position_id, language, is_active"
+         department_id = $4, position_id = $5, manager_id = $6, is_active = COALESCE($7, is_active)
+         WHERE id = $8 
+         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active"
     )
     .bind(payload.name)
     .bind(payload.email)
     .bind(payload.role)
     .bind(payload.department_id)
     .bind(payload.position_id)
+    .bind(payload.manager_id)
     .bind(payload.is_active)
     .bind(id)
     .fetch_one(&pool)

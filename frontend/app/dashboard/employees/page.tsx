@@ -38,6 +38,7 @@ interface Employee {
   role: string;
   department_id: number | null;
   position_id: number | null;
+  manager_id: number | null;
   language: string;
   is_active: boolean;
 }
@@ -73,6 +74,7 @@ export default function EmployeesPage() {
     email: '',
     department_id: '',
     position_id: '',
+    manager_id: '',
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -81,17 +83,17 @@ export default function EmployeesPage() {
       en: { 
         employees: { 
           title: 'Employees', subtitle: 'Manage employee data', addEmployee: 'Add Employee', search: 'Search employees...', 
-          name: 'Name', email: 'Email', department: 'Department', position: 'Position', status: 'Status', joinDate: 'Join Date', 
+          name: 'Name', email: 'Email', department: 'Department', position: 'Position', manager: 'Manager', status: 'Status', joinDate: 'Join Date', 
           actions: 'Actions', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete', confirmDeleteDesc: 'This action cannot be undone.',
-          noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', selectDepartmentFirst: 'Select Department First', clerkId: 'Clerk ID', loading: 'Loading...', noPositionAvailable: 'No positions available', addPosition: 'Add Position'
+          noResults: 'No employees found', selectDepartment: 'Select Department', selectPosition: 'Select Position', selectManager: 'Select Manager', selectDepartmentFirst: 'Select Department First', clerkId: 'Clerk ID', loading: 'Loading...', noPositionAvailable: 'No positions available', addPosition: 'Add Position', noManager: 'No Manager'
         }
       },
       id: { 
         employees: { 
           title: 'Karyawan', subtitle: 'Kelola data karyawan', addEmployee: 'Tambah Karyawan', search: 'Cari karyawan...', 
-          name: 'Nama', email: 'Email', department: 'Departemen', position: 'Posisi', status: 'Status', joinDate: 'Tanggal Masuk', 
+          name: 'Nama', email: 'Email', department: 'Departemen', position: 'Posisi', manager: 'Manajer', status: 'Status', joinDate: 'Tanggal Masuk', 
           actions: 'Aksi', edit: 'Edit', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus', confirmDeleteDesc: 'Tindakan ini tidak dapat dibatalkan.',
-          noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', selectDepartmentFirst: 'Pilih Departemen Dulu', clerkId: 'Clerk ID', loading: 'Memuat...', noPositionAvailable: 'Tidak ada posisi', addPosition: 'Tambah Posisi'
+          noResults: 'Karyawan tidak ditemukan', selectDepartment: 'Pilih Departemen', selectPosition: 'Pilih Posisi', selectManager: 'Pilih Manajer', selectDepartmentFirst: 'Pilih Departemen Dulu', clerkId: 'Clerk ID', loading: 'Memuat...', noPositionAvailable: 'Tidak ada posisi', addPosition: 'Tambah Posisi', noManager: 'Tidak Ada Manajer'
         }
       }
     };
@@ -146,6 +148,12 @@ export default function EmployeesPage() {
     return pos?.name || '-';
   };
 
+  const getManagerName = (mgrId: number | null) => {
+    if (!mgrId) return '-';
+    const mgr = employees.find(e => e.id === mgrId);
+    return mgr?.name || '-';
+  };
+
   const filteredEmployees = (employees || []).filter(emp => 
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -167,13 +175,14 @@ export default function EmployeesPage() {
           email: newEmployee.email,
           department_id: newEmployee.department_id ? parseInt(newEmployee.department_id) : null,
           position_id: newEmployee.position_id ? parseInt(newEmployee.position_id) : null,
+          manager_id: newEmployee.manager_id ? parseInt(newEmployee.manager_id) : null,
         }),
       });
       
       if (res.ok) {
         await fetchData();
         setIsAddDialogOpen(false);
-        setNewEmployee({ clerk_id: '', name: '', email: '', department_id: '', position_id: '' });
+        setNewEmployee({ clerk_id: '', name: '', email: '', department_id: '', position_id: '', manager_id: '' });
       }
     } catch (error) {
       console.error('Error creating employee:', error);
@@ -195,6 +204,7 @@ export default function EmployeesPage() {
           email: editingEmployee.email,
           department_id: editingEmployee.department_id,
           position_id: editingEmployee.position_id,
+          manager_id: editingEmployee.manager_id,
           is_active: editingEmployee.is_active,
         }),
       });
@@ -306,6 +316,21 @@ export default function EmployeesPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <label>{t('employees.manager')}</label>
+                <Select value={newEmployee.manager_id} onValueChange={(val) => setNewEmployee({...newEmployee, manager_id: val})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('employees.selectManager')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees
+                      .filter(e => e.id !== parseInt(newEmployee.clerk_id) || !newEmployee.clerk_id)
+                      .map(emp => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('employees.cancel')}</Button>
@@ -341,6 +366,7 @@ export default function EmployeesPage() {
                 <TableHead>{t('employees.email')}</TableHead>
                 <TableHead>{t('employees.department')}</TableHead>
                 <TableHead>{t('employees.position')}</TableHead>
+                <TableHead>{t('employees.manager')}</TableHead>
                 <TableHead>{t('employees.status')}</TableHead>
                 <TableHead className="text-right">{t('employees.actions')}</TableHead>
               </TableRow>
@@ -353,6 +379,7 @@ export default function EmployeesPage() {
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{getDepartmentName(employee.department_id)}</TableCell>
                     <TableCell>{getPositionName(employee.position_id)}</TableCell>
+                    <TableCell>{getManagerName(employee.manager_id)}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         employee.is_active 
@@ -384,7 +411,7 @@ export default function EmployeesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     {t('employees.noResults')}
                   </TableCell>
                 </TableRow>
@@ -444,6 +471,24 @@ export default function EmployeesPage() {
                   <SelectContent>
                     {positions.map(pos => (
                       <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label>{t('employees.manager')}</label>
+                <Select 
+                  value={editingEmployee.manager_id?.toString() || ''} 
+                  onValueChange={(val) => setEditingEmployee({...editingEmployee, manager_id: val ? parseInt(val) : null})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('employees.selectManager')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees
+                      .filter(e => e.id !== editingEmployee.id)
+                      .map(emp => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

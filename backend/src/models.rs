@@ -10,6 +10,7 @@ pub struct User {
     pub role: String,
     pub department_id: Option<i32>,
     pub position_id: Option<i32>,
+    pub manager_id: Option<i32>,
     pub language: String,
     pub is_active: bool,
 }
@@ -244,6 +245,7 @@ pub struct CreateEmployeeRequest {
     pub role: Option<String>,
     pub department_id: Option<i32>,
     pub position_id: Option<i32>,
+    pub manager_id: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -253,6 +255,7 @@ pub struct UpdateEmployeeRequest {
     pub role: Option<String>,
     pub department_id: Option<i32>,
     pub position_id: Option<i32>,
+    pub manager_id: Option<i32>,
     pub is_active: Option<bool>,
 }
 

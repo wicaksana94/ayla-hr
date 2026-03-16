@@ -1,10 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
+  const { isLoaded, userId } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && userId) {
+      router.push('/dashboard');
+    }
+  }, [isLoaded, userId, router]);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
