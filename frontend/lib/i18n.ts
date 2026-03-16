@@ -49,6 +49,16 @@ export const translations = {
       positions: "Positions",
       recentLeaveRequests: "Recent Leave Requests",
       quickActions: "Quick Actions",
+    },
+    leaveTypes: {
+      annual: "Annual Leave",
+      sick: "Sick Leave",
+      maternity: "Maternity Leave",
+      marriage: "Marriage Leave",
+      bereavement: "Bereavement Leave",
+      baptism: "Baptism/Circumcision Leave",
+      paid_leave: "Paid Leave",
+      unpaid_leave: "Unpaid Leave",
     }
   },
   id: {
@@ -78,6 +88,16 @@ export const translations = {
       positions: "Posisi",
       recentLeaveRequests: "Permintaan Cuti Terbaru",
       quickActions: "Aksi Cepat",
+    },
+    leaveTypes: {
+      annual: "Cuti Tahunan",
+      sick: "Cuti Sakit",
+      maternity: "Cuti Melahirkan",
+      marriage: "Cuti Pernikahan",
+      bereavement: "Cuti Kematian",
+      baptism: "Cuti Baptis/Sunatan",
+      paid_leave: "Cuti Berbayar",
+      unpaid_leave: "Cuti Tidak Berbayar",
     }
   },
   es: {
@@ -107,6 +127,16 @@ export const translations = {
       positions: "Posiciones",
       recentLeaveRequests: "Solicitudes Recientes",
       quickActions: "Acciones Rápidas",
+    },
+    leaveTypes: {
+      annual: "Permiso Anual",
+      sick: "Permiso por Krankheit",
+      maternity: "Permiso de Maternidad",
+      marriage: "Permiso de Matrimonio",
+      bereavement: "Permiso por Duelo",
+      baptism: "Permiso de Bautizo/Circuncisión",
+      paid_leave: "Permiso Pagado",
+      unpaid_leave: "Permiso No Pagado",
     }
   },
   zh: {
@@ -136,6 +166,16 @@ export const translations = {
       positions: "职位",
       recentLeaveRequests: "最近请假申请",
       quickActions: "快速操作",
+    },
+    leaveTypes: {
+      annual: "年假",
+      sick: "病假",
+      maternity: "产假",
+      marriage: "婚假",
+      bereavement: "丧假",
+      baptism: "洗礼/割礼假",
+      paid_leave: "带薪假",
+      unpaid_leave: "无薪假",
     }
   }
 };

@@ -195,8 +195,7 @@ export default function MyLeavePage() {
   };
 
   const getLeaveTypeLabel = (code: string) => {
-    const type = leaveTypes.find(t => t.code === code);
-    return type?.name || code;
+    return t(`leaveTypes.${code}`) || code;
   };
 
   const getStatusLabel = (status: string) => {
@@ -207,8 +206,12 @@ export default function MyLeavePage() {
   const balances = {
     annual: 12,
     sick: 10,
-    paid: 5,
-    unpaid: Infinity,
+    maternity: 90,
+    marriage: 3,
+    bereavement: 3,
+    baptism: 2,
+    paid_leave: 5,
+    unpaid_leave: Infinity,
   };
 
   return (
