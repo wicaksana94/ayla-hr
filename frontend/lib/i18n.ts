@@ -57,6 +57,8 @@ export const translations = {
       marriage: "Marriage Leave",
       bereavement: "Bereavement Leave",
       baptism: "Baptism/Circumcision Leave",
+      paid: "Paid Leave",
+      unpaid: "Unpaid Leave",
       paid_leave: "Paid Leave",
       unpaid_leave: "Unpaid Leave",
     }

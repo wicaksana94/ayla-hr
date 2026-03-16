@@ -210,7 +210,9 @@ export default function MyLeavePage() {
     marriage: 3,
     bereavement: 3,
     baptism: 2,
+    paid: 5,
     paid_leave: 5,
+    unpaid: Infinity,
     unpaid_leave: Infinity,
   };
 
@@ -230,7 +232,7 @@ export default function MyLeavePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {type.code === 'unpaid_leave' ? '∞' : balances[type.code as keyof typeof balances] || 0}
+                {['unpaid', 'unpaid_leave'].includes(type.code) ? '∞' : balances[type.code as keyof typeof balances] || 0}
               </div>
               <p className="text-xs text-muted-foreground">
                 {type.is_paid ? 'Paid' : 'Unpaid'}
