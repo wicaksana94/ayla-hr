@@ -226,7 +226,7 @@ export default function MyLeavePage() {
         {leaveTypes.map((type) => (
           <Card key={type.code}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{type.name}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t(`leaveTypes.${type.code}`)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -257,7 +257,7 @@ export default function MyLeavePage() {
                   <SelectContent>
                     {leaveTypes.map((type) => (
                       <SelectItem key={type.code} value={type.code}>
-                        {type.name}
+                        {t(`leaveTypes.${type.code}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
