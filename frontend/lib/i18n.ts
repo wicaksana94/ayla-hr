@@ -98,6 +98,8 @@ export const translations = {
       marriage: "Cuti Pernikahan",
       bereavement: "Cuti Kematian",
       baptism: "Cuti Baptis/Sunatan",
+      paid: "Cuti Berbayar",
+      unpaid: "Cuti Tidak Berbayar",
       paid_leave: "Cuti Berbayar",
       unpaid_leave: "Cuti Tidak Berbayar",
     }
@@ -137,6 +139,8 @@ export const translations = {
       marriage: "Permiso de Matrimonio",
       bereavement: "Permiso por Duelo",
       baptism: "Permiso de Bautizo/Circuncisión",
+      paid: "Permiso Pagado",
+      unpaid: "Permiso No Pagado",
       paid_leave: "Permiso Pagado",
       unpaid_leave: "Permiso No Pagado",
     }
@@ -176,6 +180,8 @@ export const translations = {
       marriage: "婚假",
       bereavement: "丧假",
       baptism: "洗礼/割礼假",
+      paid: "带薪假",
+      unpaid: "无薪假",
       paid_leave: "带薪假",
       unpaid_leave: "无薪假",
     }
