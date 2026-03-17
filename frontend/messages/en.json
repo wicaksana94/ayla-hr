@@ -1,0 +1,61 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "departments": "Departments",
+    "positions": "Positions",
+    "leaveRequests": "Leave Requests",
+    "myLeave": "My Leave",
+    "reports": "Reports",
+    "settings": "Settings",
+    "profile": "Profile",
+    "signOut": "Sign Out",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
+  "navbar": {
+    "notifications": "Notifications",
+    "language": "Language"
+  },
+  "dashboard": {
+    "welcome": "Welcome to AylaHR",
+    "totalEmployees": "Total Employees",
+    "pendingLeaves": "Pending Leaves",
+    "departments": "Departments",
+    "positions": "Positions",
+    "recentLeaveRequests": "Recent Leave Requests",
+    "quickActions": "Quick Actions"
+  },
+  "leaveTypes": {
+    "annual": "Annual Leave",
+    "sick": "Sick Leave",
+    "maternity": "Maternity Leave",
+    "marriage": "Marriage Leave",
+    "bereavement": "Bereavement Leave",
+    "baptism": "Baptism/Circumcision Leave",
+    "paid": "Paid Leave",
+    "unpaid": "Unpaid Leave",
+    "paid_leave": "Paid Leave",
+    "unpaid_leave": "Unpaid Leave"
+  },
+  "myLeave": {
+    "title": "My Leave",
+    "subtitle": "Manage your leave requests",
+    "balance": "Leave Balance",
+    "submit": "Submit Leave Request",
+    "type": "Leave Type",
+    "dateRange": "Date Range",
+    "totalDays": "Total Days",
+    "days": "day(s)",
+    "reason": "Reason (Optional)",
+    "reasonPlaceholder": "Enter reason for leave...",
+    "submitBtn": "Submit Request",
+    "history": "Leave History",
+    "selectType": "Select leave type",
+    "pickDate": "Pick a date range",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "noHistory": "No leave requests yet"
+  }
+}

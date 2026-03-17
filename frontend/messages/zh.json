@@ -1,0 +1,61 @@
+{
+  "common": {
+    "dashboard": "仪表板",
+    "employees": "员工",
+    "departments": "部门",
+    "positions": "职位",
+    "leaveRequests": "请假申请",
+    "myLeave": "我的请假",
+    "reports": "报告",
+    "settings": "设置",
+    "profile": "个人资料",
+    "signOut": "退出登录",
+    "signIn": "登录",
+    "signUp": "注册"
+  },
+  "navbar": {
+    "notifications": "通知",
+    "language": "语言"
+  },
+  "dashboard": {
+    "welcome": "欢迎使用 AylaHR",
+    "totalEmployees": "员工总数",
+    "pendingLeaves": "待处理请假",
+    "departments": "部门",
+    "positions": "职位",
+    "recentLeaveRequests": "最近请假申请",
+    "quickActions": "快速操作"
+  },
+  "leaveTypes": {
+    "annual": "年假",
+    "sick": "病假",
+    "maternity": "产假",
+    "marriage": "婚假",
+    "bereavement": "丧假",
+    "baptism": "洗礼/割礼假",
+    "paid": "带薪假",
+    "unpaid": "无薪假",
+    "paid_leave": "带薪假",
+    "unpaid_leave": "无薪假"
+  },
+  "myLeave": {
+    "title": "我的请假",
+    "subtitle": "管理您的请假申请",
+    "balance": "请假余额",
+    "submit": "提交请假申请",
+    "type": "请假类型",
+    "dateRange": "日期范围",
+    "totalDays": "总天数",
+    "days": "天",
+    "reason": "原因（可选）",
+    "reasonPlaceholder": "输入请假原因...",
+    "submitBtn": "提交申请",
+    "history": "请假历史",
+    "selectType": "选择请假类型",
+    "pickDate": "选择日期范围",
+    "pending": "待处理",
+    "approved": "已批准",
+    "rejected": "已拒绝",
+    "noHistory": "暂无请假记录"
+  }
+}

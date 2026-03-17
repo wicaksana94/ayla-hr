@@ -1,6 +1,6 @@
 'use client';
 
-import { useI18n } from '@/lib/i18n';
+import { useI18n, useTranslations } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,6 +31,7 @@ const statusColors: Record<string, string> = {
 
 export default function MyLeavePage() {
   const { language } = useI18n();
+  const t = useTranslations();
   const { user } = useUser();
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
@@ -40,101 +41,6 @@ export default function MyLeavePage() {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const t = (key: string): string => {
-    const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { 
-        myLeave: { 
-          title: 'My Leave', 
-          subtitle: 'Manage your leave requests', 
-          balance: 'Leave Balance', 
-          submit: 'Submit Leave Request', 
-          type: 'Leave Type', 
-          dateRange: 'Date Range', 
-          totalDays: 'Total Days', 
-          days: 'day(s)', 
-          reason: 'Reason (Optional)', 
-          reasonPlaceholder: 'Enter reason for leave...', 
-          submitBtn: 'Submit Request', 
-          history: 'Leave History', 
-          selectType: 'Select leave type', 
-          pickDate: 'Pick a date range', 
-          pending: 'Pending', 
-          approved: 'Approved',
-          rejected: 'Rejected',
-          noHistory: 'No leave requests yet'
-        } 
-      },
-      id: { 
-        myLeave: { 
-          title: 'Cuti Saya', 
-          subtitle: 'Kelola permintaan cuti Anda', 
-          balance: 'Saldo Cuti', 
-          submit: 'Ajukan Permintaan Cuti', 
-          type: 'Jenis Cuti', 
-          dateRange: 'Rentang Tanggal', 
-          totalDays: 'Total Hari', 
-          days: 'hari', 
-          reason: 'Alasan (Opsional)', 
-          reasonPlaceholder: 'Masukkan alasan cuti...', 
-          submitBtn: 'Ajukan Permintaan', 
-          history: 'Riwayat Cuti', 
-          selectType: 'Pilih jenis cuti', 
-          pickDate: 'Pilih rentang tanggal', 
-          pending: 'Menunggu', 
-          approved: 'Disetujui',
-          rejected: 'Ditolak',
-          noHistory: 'Belum ada permintaan cuti'
-        } 
-      },
-      es: { 
-        myLeave: { 
-          title: 'Mi Permiso', 
-          subtitle: 'Gestiona tus solicitudes de permiso', 
-          balance: 'Saldo de Permiso', 
-          submit: 'Enviar Solicitud', 
-          type: 'Tipo de Permiso', 
-          dateRange: 'Rango de Fechas', 
-          totalDays: 'Días Totales', 
-          days: 'días', 
-          reason: 'Razón (Opcional)', 
-          reasonPlaceholder: 'Ingrese razón...', 
-          submitBtn: 'Enviar Solicitud', 
-          history: 'Historial', 
-          selectType: 'Seleccione tipo', 
-          pickDate: 'Seleccione fechas', 
-          pending: 'Pendiente', 
-          approved: 'Aprobado',
-          rejected: 'Rechazado',
-          noHistory: 'Sin solicitudes'
-        } 
-      },
-      zh: { 
-        myLeave: { 
-          title: '我的请假', 
-          subtitle: '管理您的请假申请', 
-          balance: '请假余额', 
-          submit: '提交请假申请', 
-          type: '请假类型', 
-          dateRange: '日期范围', 
-          totalDays: '总天数', 
-          days: '天', 
-          reason: '原因（可选）', 
-          reasonPlaceholder: '输入请假原因...', 
-          submitBtn: '提交申请', 
-          history: '请假历史', 
-          selectType: '选择请假类型', 
-          pickDate: '选择日期范围', 
-          pending: '待处理', 
-          approved: '已批准',
-          rejected: '已拒绝',
-          noHistory: '暂无请假记录'
-        } 
-      },
-    };
-    const [category, keyPart] = key.split('.');
-    return trans[language]?.[category]?.[keyPart] || key;
-  };
 
   const totalDays = selectedRange?.from && selectedRange?.to 
     ? differenceInDays(selectedRange.to, selectedRange.from) + 1 

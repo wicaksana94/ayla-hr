@@ -1,0 +1,61 @@
+{
+  "common": {
+    "dashboard": "Dasbor",
+    "employees": "Karyawan",
+    "departments": "Departemen",
+    "positions": "Posisi",
+    "leaveRequests": "Permintaan Cuti",
+    "myLeave": "Cuti Saya",
+    "reports": "Laporan",
+    "settings": "Pengaturan",
+    "profile": "Profil",
+    "signOut": "Keluar",
+    "signIn": "Masuk",
+    "signUp": "Daftar"
+  },
+  "navbar": {
+    "notifications": "Notifikasi",
+    "language": "Bahasa"
+  },
+  "dashboard": {
+    "welcome": "Selamat Datang di AylaHR",
+    "totalEmployees": "Total Karyawan",
+    "pendingLeaves": "Cuti Menunggu",
+    "departments": "Departemen",
+    "positions": "Posisi",
+    "recentLeaveRequests": "Permintaan Cuti Terbaru",
+    "quickActions": "Aksi Cepat"
+  },
+  "leaveTypes": {
+    "annual": "Cuti Tahunan",
+    "sick": "Cuti Sakit",
+    "maternity": "Cuti Melahirkan",
+    "marriage": "Cuti Pernikahan",
+    "bereavement": "Cuti Kematian",
+    "baptism": "Cuti Baptis/Sunatan",
+    "paid": "Cuti Berbayar",
+    "unpaid": "Cuti Tidak Berbayar",
+    "paid_leave": "Cuti Berbayar",
+    "unpaid_leave": "Cuti Tidak Berbayar"
+  },
+  "myLeave": {
+    "title": "Cuti Saya",
+    "subtitle": "Kelola permintaan cuti Anda",
+    "balance": "Saldo Cuti",
+    "submit": "Ajukan Permintaan Cuti",
+    "type": "Jenis Cuti",
+    "dateRange": "Rentang Tanggal",
+    "totalDays": "Total Hari",
+    "days": "hari",
+    "reason": "Alasan (Opsional)",
+    "reasonPlaceholder": "Masukkan alasan cuti...",
+    "submitBtn": "Ajukan Permintaan",
+    "history": "Riwayat Cuti",
+    "selectType": "Pilih jenis cuti",
+    "pickDate": "Pilih rentang tanggal",
+    "pending": "Menunggu",
+    "approved": "Disetujui",
+    "rejected": "Ditolak",
+    "noHistory": "Belum ada permintaan cuti"
+  }
+}

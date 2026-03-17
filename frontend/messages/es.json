@@ -1,0 +1,61 @@
+{
+  "common": {
+    "dashboard": "Panel",
+    "employees": "Empleados",
+    "departments": "Departamentos",
+    "positions": "Posiciones",
+    "leaveRequests": "Solicitudes de Permiso",
+    "myLeave": "Mi Permiso",
+    "reports": "Informes",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "signOut": "Cerrar Sesión",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse"
+  },
+  "navbar": {
+    "notifications": "Notificaciones",
+    "language": "Idioma"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido a AylaHR",
+    "totalEmployees": "Total de Empleados",
+    "pendingLeaves": "Permisos Pendientes",
+    "departments": "Departamentos",
+    "positions": "Posiciones",
+    "recentLeaveRequests": "Solicitudes Recientes",
+    "quickActions": "Acciones Rápidas"
+  },
+  "leaveTypes": {
+    "annual": "Permiso Anual",
+    "sick": "Permiso por Krankheit",
+    "maternity": "Permiso de Maternidad",
+    "marriage": "Permiso de Matrimonio",
+    "bereavement": "Permiso por Duelo",
+    "baptism": "Permiso de Bautizo/Circuncisión",
+    "paid": "Permiso Pagado",
+    "unpaid": "Permiso No Pagado",
+    "paid_leave": "Permiso Pagado",
+    "unpaid_leave": "Permiso No Pagado"
+  },
+  "myLeave": {
+    "title": "Mi Permiso",
+    "subtitle": "Gestiona tus solicitudes de permiso",
+    "balance": "Saldo de Permiso",
+    "submit": "Enviar Solicitud",
+    "type": "Tipo de Permiso",
+    "dateRange": "Rango de Fechas",
+    "totalDays": "Días Totales",
+    "days": "días",
+    "reason": "Razón (Opcional)",
+    "reasonPlaceholder": "Ingrese razón...",
+    "submitBtn": "Enviar Solicitud",
+    "history": "Historial",
+    "selectType": "Seleccione tipo",
+    "pickDate": "Seleccione fechas",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "noHistory": "Sin solicitudes"
+  }
+}
