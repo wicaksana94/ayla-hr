@@ -17,11 +17,12 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { format, differenceInDays } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Loader2, CheckCircle, XCircle, Paperclip } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { useUser } from '@clerk/nextjs';
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
+import { SickLeaveUploader } from "@/components/uploadthing/SickLeaveUploader";
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -36,6 +37,7 @@ export default function MyLeavePage() {
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
   const [reason, setReason] = useState('');
+  const [attachment, setAttachment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [leaveHistory, setLeaveHistory] = useState<Leave[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
@@ -81,12 +83,14 @@ export default function MyLeavePage() {
         end_date: format(selectedRange.to, 'yyyy-MM-dd'),
         total_days: totalDays,
         reason: reason || undefined,
+        attachment: attachment || undefined,
       });
 
       setSubmitSuccess(true);
       setLeaveType('');
       setSelectedRange(undefined);
       setReason('');
+      setAttachment('');
       
       // Refresh history
       const historyData = await getLeaves({ page: 1, limit: 10 });
@@ -222,6 +226,14 @@ export default function MyLeavePage() {
                 onChange={(e) => setReason(e.target.value)}
               />
             </div>
+
+            {/* File upload for sick leave */}
+            {leaveType === 'sick' && (
+              <SickLeaveUploader 
+                onUploadComplete={setAttachment}
+                value={attachment}
+              />
+            )}
 
             <Button type="submit" className="w-full" disabled={submitting || !leaveType || !selectedRange?.from || !selectedRange?.to}>
               {submitting ? (

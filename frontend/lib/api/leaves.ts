@@ -8,6 +8,7 @@ export interface Leave {
   end_date: string;
   total_days: number;
   reason: string | null;
+  attachment: string | null;
   status: 'pending' | 'approved' | 'rejected';
   approved_by: number | null;
   approved_at: string | null;
@@ -65,6 +66,7 @@ export async function createLeave(data: {
   end_date: string;
   total_days?: number;
   reason?: string;
+  attachment?: string;
 }): Promise<Leave> {
   const res = await fetch(`${API_BASE}/api/leaves`, {
     method: 'POST',
