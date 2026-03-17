@@ -371,8 +371,8 @@ pub async fn list_leaves(
 
     let query = if let (Some(user_id), Some(status)) = (params.user_id, params.status) {
         sqlx::query_as::<_, Leave>(
-            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at
+             FROM leaves WHERE user_id = $1 AND status = $2 ORDER BY id DESC LIMIT $3 OFFSET $4"
         )
         .bind(user_id)
         .bind(status)
@@ -380,16 +380,16 @@ pub async fn list_leaves(
         .bind(offset)
     } else if let Some(user_id) = params.user_id {
         sqlx::query_as::<_, Leave>(
-            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at
+             FROM leaves WHERE user_id = $1 ORDER BY id DESC LIMIT $2 OFFSET $3"
         )
         .bind(user_id)
         .bind(limit)
         .bind(offset)
     } else {
         sqlx::query_as::<_, Leave>(
-            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at
-             FROM leaves ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at
+             FROM leaves ORDER BY id DESC LIMIT $1 OFFSET $2"
         )
         .bind(limit)
         .bind(offset)
@@ -418,9 +418,9 @@ pub async fn create_leave(
     }
 
     match sqlx::query_as::<_, Leave>(
-        "INSERT INTO leaves (user_id, leave_type, start_date, end_date, total_days, reason, status)
-         VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-         RETURNING id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at"
+        "INSERT INTO leaves (user_id, leave_type, start_date, end_date, total_days, reason, attachment, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+         RETURNING id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at"
     )
     .bind(payload.user_id)
     .bind(payload.leave_type.trim())
@@ -428,6 +428,7 @@ pub async fn create_leave(
     .bind(payload.end_date.trim())
     .bind(payload.total_days)
     .bind(payload.reason)
+    .bind(payload.attachment)
     .fetch_one(&pool)
     .await
     {

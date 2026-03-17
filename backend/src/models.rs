@@ -49,6 +49,7 @@ pub struct Leave {
     pub end_date: String,
     pub total_days: i32,
     pub reason: Option<String>,
+    pub attachment: Option<String>,
     pub status: String,
     pub approved_by: Option<i32>,
     pub approved_at: Option<String>,
@@ -136,9 +137,11 @@ mod tests {
             end_date: "2024-02-02".to_string(),
             total_days: Some(2),
             reason: Some("Not feeling well".to_string()),
+            attachment: Some("https://example.com/file.pdf".to_string()),
         };
         
         assert_eq!(req.user_id, 5);
+        assert_eq!(req.attachment, Some("https://example.com/file.pdf".to_string()));
         assert_eq!(req.leave_type, "sick");
         assert_eq!(req.total_days, Some(2));
     }
@@ -179,6 +182,7 @@ mod tests {
             end_date: "2024-01-05".to_string(),
             total_days: 5,
             reason: Some("Holiday".to_string()),
+            attachment: Some("https://example.com/medical-cert.pdf".to_string()),
             status: "pending".to_string(),
             approved_by: None,
             approved_at: None,
@@ -186,6 +190,7 @@ mod tests {
         
         assert_eq!(leave.total_days, 5);
         assert_eq!(leave.status, "pending");
+        assert_eq!(leave.attachment, Some("https://example.com/medical-cert.pdf".to_string()));
     }
     
     #[test]
@@ -295,6 +300,7 @@ pub struct CreateLeaveRequest {
     pub end_date: String,
     pub total_days: Option<i32>,
     pub reason: Option<String>,
+    pub attachment: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
