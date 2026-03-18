@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS leaves (
     reason TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     approved_by BIGINT REFERENCES users(id),
-    approved_at TIMESTAMP WITH TIME ZONE,
+    approved_at TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
