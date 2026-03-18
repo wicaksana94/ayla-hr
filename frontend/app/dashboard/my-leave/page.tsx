@@ -22,7 +22,7 @@ import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
 import { SickLeaveUploader } from "@/components/uploadthing/SickLeaveUploader";
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/toast';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -33,6 +33,7 @@ const statusColors: Record<string, string> = {
 export default function MyLeavePage() {
   const { language } = useI18n();
   const t = useTranslations();
+  const { showToast } = useToast();
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
   const [reason, setReason] = useState('');
@@ -59,7 +60,7 @@ export default function MyLeavePage() {
         setLeaveHistory(historyData.data);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        toast.error('Failed to load data. Please refresh the page.');
+        showToast('Failed to load data. Please refresh the page.', 'error');
       } finally {
         setLoading(false);
       }
@@ -70,7 +71,7 @@ export default function MyLeavePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leaveType || !selectedRange?.from || !selectedRange?.to) {
-      toast.error(t('myLeave.fillAllFields') || 'Please fill all required fields');
+      showToast(t('myLeave.fillAllFields') || 'Please fill all required fields', 'error');
       return;
     }
 
@@ -89,7 +90,7 @@ export default function MyLeavePage() {
         attachment: attachment || undefined,
       });
 
-      toast.success(t('myLeave.submitSuccess') || 'Leave request submitted successfully!');
+      showToast(t('myLeave.submitSuccess') || 'Leave request submitted successfully!', 'success');
       setSubmitSuccess(true);
       setLeaveType('');
       setSelectedRange(undefined);
@@ -103,7 +104,7 @@ export default function MyLeavePage() {
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (error) {
       console.error('Failed to submit leave:', error);
-      toast.error(t('myLeave.submitError') || 'Failed to submit leave request. Please try again.');
+      showToast(t('myLeave.submitError') || 'Failed to submit leave request. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
