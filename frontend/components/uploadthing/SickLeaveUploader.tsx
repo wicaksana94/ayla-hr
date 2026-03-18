@@ -6,12 +6,13 @@ import type { UploadRouter } from "@/app/api/uploadthing/core";
 
 interface FileUploadProps {
   onUploadComplete?: (url: string) => void;
+  onUploadStatusChange?: (isUploading: boolean) => void;
   value?: string;
 }
 
 const { useUploadThing } = generateReactHelpers<UploadRouter>();
 
-export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) {
+export function SickLeaveUploader({ onUploadComplete, onUploadStatusChange, value }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -26,11 +27,13 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
         onUploadComplete?.(url);
       }
       setUploading(false);
+      onUploadStatusChange?.(false);
     },
     onUploadError: (error) => {
       console.error("Upload error:", error);
       setError(error.message || "Upload failed");
       setUploading(false);
+      onUploadStatusChange?.(false);
     },
   });
 
@@ -55,6 +58,7 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
 
     setError(null);
     setUploading(true);
+    onUploadStatusChange?.(true);
     
     // Create preview for images
     if (file.type.startsWith('image/')) {

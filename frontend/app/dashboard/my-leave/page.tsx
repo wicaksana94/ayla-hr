@@ -39,6 +39,7 @@ export default function MyLeavePage() {
   const [reason, setReason] = useState('');
   const [attachment, setAttachment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
   const [leaveHistory, setLeaveHistory] = useState<Leave[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,19 +238,25 @@ export default function MyLeavePage() {
             {leaveType === 'sick' && (
               <SickLeaveUploader 
                 onUploadComplete={setAttachment}
+                onUploadStatusChange={setFileUploading}
                 value={attachment}
               />
             )}
 
-            <Button type="submit" className="w-full" disabled={submitting || !leaveType || !selectedRange?.from || !selectedRange?.to}>
-              {submitting ? (
+            <Button type="submit" className="w-full" disabled={submitting || fileUploading || !leaveType || !selectedRange?.from || !selectedRange?.to}>
+              {fileUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading file...
+                </>
+              ) : submitting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : submitSuccess ? (
                 <CheckCircle className="w-4 h-4 mr-2" />
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              {submitSuccess ? 'Submitted!' : t('myLeave.submitBtn')}
+              {submitSuccess ? 'Submitted!' : fileUploading ? 'Please wait...' : t('myLeave.submitBtn')}
             </Button>
           </form>
         </CardContent>
