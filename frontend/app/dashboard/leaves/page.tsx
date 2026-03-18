@@ -343,9 +343,10 @@ export default function LeavesPage() {
                       href={selectedLeave.attachment} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-medium"
+                      download
+                      className="text-blue-600 hover:underline font-medium flex items-center gap-1"
                     >
-                      View Attachment
+                      📎 Download Attachment
                     </a>
                   </div>
                 </div>
