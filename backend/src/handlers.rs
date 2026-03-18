@@ -451,7 +451,7 @@ pub async fn update_leave_status(
     match sqlx::query_as::<_, Leave>(
         "UPDATE leaves SET status = $1, approved_by = $2, approved_at = $3
          WHERE id = $4
-         RETURNING id, user_id, leave_type, start_date, end_date, total_days, reason, status, approved_by, approved_at"
+         RETURNING id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at"
     )
     .bind(payload.status)
     .bind(payload.approved_by)
