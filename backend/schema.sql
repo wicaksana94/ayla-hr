@@ -64,8 +64,8 @@ CREATE TABLE IF NOT EXISTS leaves (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) NOT NULL,
     leave_type VARCHAR(50) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
     total_days INTEGER NOT NULL,
     reason TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
@@ -191,13 +191,13 @@ LEFT JOIN users au ON l.approved_by = au.id;
 -- ================================
 
 -- Function to calculate working days between dates (excluding weekends)
-CREATE OR REPLACE FUNCTION calculate_working_days(start_date DATE, end_date DATE)
+CREATE OR REPLACE FUNCTION calculate_working_days(start_date TEXT, end_date TEXT)
 RETURNS INTEGER AS $$
 DECLARE
     working_days INTEGER := 0;
-    current_date DATE := start_date;
+    current_date DATE := start_date::DATE;
 BEGIN
-    WHILE current_date <= end_date LOOP
+    WHILE current_date <= end_date::DATE LOOP
         IF EXTRACT(DOW FROM current_date) NOT IN (0, 6) THEN
             working_days := working_days + 1;
         END IF;
