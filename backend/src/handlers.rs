@@ -8,142 +8,6 @@ use serde::Deserialize;
 
 use crate::models::*;
 
-// Helper function to execute count query with parameters
-async fn query_with_params(pool: &PgPool, query: &str, params: &ListLeavesQuery) -> Result<sqlx::Row, sqlx::Error> {
-    let search = params.search.clone().unwrap_or_default();
-    
-    if let (Some(user_id), Some(status)) = (params.user_id, params.status.clone()) {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query(query)
-                .bind(user_id)
-                .bind(status)
-                .bind(&search_pattern)
-                .fetch_one(pool)
-                .await
-        } else {
-            sqlx::query(query)
-                .bind(user_id)
-                .bind(status)
-                .fetch_one(pool)
-                .await
-        }
-    } else if let Some(user_id) = params.user_id {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query(query)
-                .bind(user_id)
-                .bind(&search_pattern)
-                .fetch_one(pool)
-                .await
-        } else {
-            sqlx::query(query)
-                .bind(user_id)
-                .fetch_one(pool)
-                .await
-        }
-    } else if let Some(status) = &params.status {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query(query)
-                .bind(status)
-                .bind(&search_pattern)
-                .fetch_one(pool)
-                .await
-        } else {
-            sqlx::query(query)
-                .bind(status)
-                .fetch_one(pool)
-                .await
-        }
-    } else if !search.is_empty() {
-        let search_pattern = format!("%{}%", search);
-        sqlx::query(query)
-            .bind(&search_pattern)
-            .fetch_one(pool)
-            .await
-    } else {
-        sqlx::query(query).fetch_one(pool).await
-    }
-}
-
-// Helper function to execute leaves query with parameters
-async fn query_with_params_leaves(pool: &PgPool, query: &str, params: &ListLeavesQuery, limit: i32, offset: i32) -> Result<Vec<Leave>, sqlx::Error> {
-    let search = params.search.clone().unwrap_or_default();
-    
-    if let (Some(user_id), Some(status)) = (params.user_id, params.status.clone()) {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query_as::<_, Leave>(query)
-                .bind(user_id)
-                .bind(status)
-                .bind(&search_pattern)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        } else {
-            sqlx::query_as::<_, Leave>(query)
-                .bind(user_id)
-                .bind(status)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        }
-    } else if let Some(user_id) = params.user_id {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query_as::<_, Leave>(query)
-                .bind(user_id)
-                .bind(&search_pattern)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        } else {
-            sqlx::query_as::<_, Leave>(query)
-                .bind(user_id)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        }
-    } else if let Some(status) = &params.status {
-        if !search.is_empty() {
-            let search_pattern = format!("%{}%", search);
-            sqlx::query_as::<_, Leave>(query)
-                .bind(status)
-                .bind(&search_pattern)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        } else {
-            sqlx::query_as::<_, Leave>(query)
-                .bind(status)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(pool)
-                .await
-        }
-    } else if !search.is_empty() {
-        let search_pattern = format!("%{}%", search);
-        sqlx::query_as::<_, Leave>(query)
-            .bind(&search_pattern)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
-    } else {
-        sqlx::query_as::<_, Leave>(query)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
-    }
-}
-
 pub async fn root() -> &'static str {
     "Welcome to AylaHR API"
 }
@@ -505,55 +369,151 @@ pub async fn list_leaves(
     let page = params.page.unwrap_or(1).max(1);
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * limit;
-    let search = params.search.unwrap_or_default();
+    let search = params.search.clone().unwrap_or_default();
+    let search_pattern = format!("%{}%", search);
 
-    // Build WHERE clause
-    let mut conditions = Vec::new();
-    let mut param_idx = 1;
-    
-    if params.user_id.is_some() {
-        conditions.push(format!("user_id = ${}", param_idx));
-        param_idx += 1;
-    }
-    if params.status.is_some() {
-        conditions.push(format!("status = ${}", param_idx));
-        param_idx += 1;
-    }
-    if !search.is_empty() {
-        conditions.push(format!("(reason ILIKE ${} OR leave_type ILIKE ${})", param_idx, param_idx));
-        param_idx += 1;
-    }
-    
-    let where_clause = if conditions.is_empty() {
-        String::new()
+    let (count_query, data_query) = if let (Some(user_id), Some(status)) = (params.user_id, params.status.clone()) {
+        if !search.is_empty() {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE user_id = $1 AND status = $2 AND (reason ILIKE $3 OR leave_type ILIKE $3)",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE user_id = $1 AND status = $2 AND (reason ILIKE $3 OR leave_type ILIKE $3) ORDER BY id DESC LIMIT $4 OFFSET $5"
+            )
+        } else {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE user_id = $1 AND status = $2",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE user_id = $1 AND status = $2 ORDER BY id DESC LIMIT $3 OFFSET $4"
+            )
+        }
+    } else if let Some(user_id) = params.user_id {
+        if !search.is_empty() {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE user_id = $1 AND (reason ILIKE $2 OR leave_type ILIKE $2)",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE user_id = $1 AND (reason ILIKE $2 OR leave_type ILIKE $2) ORDER BY id DESC LIMIT $3 OFFSET $4"
+            )
+        } else {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE user_id = $1",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE user_id = $1 ORDER BY id DESC LIMIT $2 OFFSET $3"
+            )
+        }
+    } else if let Some(status) = &params.status {
+        if !search.is_empty() {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE status = $1 AND (reason ILIKE $2 OR leave_type ILIKE $2)",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE status = $1 AND (reason ILIKE $2 OR leave_type ILIKE $2) ORDER BY id DESC LIMIT $3 OFFSET $4"
+            )
+        } else {
+            (
+                "SELECT COUNT(*) as total FROM leaves WHERE status = $1",
+                "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE status = $1 ORDER BY id DESC LIMIT $2 OFFSET $3"
+            )
+        }
+    } else if !search.is_empty() {
+        (
+            "SELECT COUNT(*) as total FROM leaves WHERE reason ILIKE $1 OR leave_type ILIKE $1",
+            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves WHERE reason ILIKE $1 OR leave_type ILIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3"
+        )
     } else {
-        format!("WHERE {}", conditions.join(" AND "))
+        (
+            "SELECT COUNT(*) as total FROM leaves",
+            "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at FROM leaves ORDER BY id DESC LIMIT $1 OFFSET $2"
+        )
     };
 
     // Get total count
-    let count_query = format!("SELECT COUNT(*) as total FROM leaves {}", where_clause);
-    let total: i64 = match query_with_params(&pool, &count_query, &params).await {
-        Ok(row) => row.get("total").unwrap_or(0),
-        Err(_) => 0,
+    let total: i64 = match (params.user_id, params.status.clone(), search.as_str()) {
+        (Some(uid), Some(st), s) if !s.is_empty() => {
+            sqlx::query_scalar(count_query)
+                .bind(uid).bind(st).bind(&search_pattern)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (Some(uid), Some(st), _) => {
+            sqlx::query_scalar(count_query)
+                .bind(uid).bind(st)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (Some(uid), None, s) if !s.is_empty() => {
+            sqlx::query_scalar(count_query)
+                .bind(uid).bind(&search_pattern)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (Some(uid), None, _) => {
+            sqlx::query_scalar(count_query)
+                .bind(uid)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (None, Some(st), s) if !s.is_empty() => {
+            sqlx::query_scalar(count_query)
+                .bind(st).bind(&search_pattern)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (None, Some(st), _) => {
+            sqlx::query_scalar(count_query)
+                .bind(st)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        (None, None, s) if !s.is_empty() => {
+            sqlx::query_scalar(count_query)
+                .bind(&search_pattern)
+                .fetch_one(&pool).await.unwrap_or(0)
+        },
+        _ => {
+            sqlx::query_scalar(count_query)
+                .fetch_one(&pool).await.unwrap_or(0)
+        }
     };
 
     // Get data
-    let query = format!(
-        "SELECT id, user_id, leave_type, start_date, end_date, total_days, reason, attachment, status, approved_by, approved_at
-         FROM leaves {} ORDER BY id DESC LIMIT ${} OFFSET ${}",
-        where_clause, param_idx, param_idx + 1
-    );
-    
-    match query_with_params_leaves(&pool, &query, &params, limit, offset).await {
-        Ok(leaves) => Json(serde_json::json!({
-            "data": leaves,
-            "page": page,
-            "limit": limit,
-            "total": total,
-            "totalPages": (total as f64 / limit as f64).ceil() as i32
-        })),
-        Err(e) => Json(serde_json::json!({"error": "Failed to fetch leaves", "details": e.to_string()})),
-    }
+    let leaves: Vec<Leave> = match (params.user_id, params.status.clone(), search.as_str()) {
+        (Some(uid), Some(st), s) if !s.is_empty() => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(uid).bind(st).bind(&search_pattern).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (Some(uid), Some(st), _) => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(uid).bind(st).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (Some(uid), None, s) if !s.is_empty() => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(uid).bind(&search_pattern).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (Some(uid), None, _) => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(uid).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (None, Some(st), s) if !s.is_empty() => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(st).bind(&search_pattern).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (None, Some(st), _) => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(st).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        (None, None, s) if !s.is_empty() => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(&search_pattern).bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        },
+        _ => {
+            sqlx::query_as::<_, Leave>(data_query)
+                .bind(limit).bind(offset)
+                .fetch_all(&pool).await.unwrap_or_default()
+        }
+    };
+
+    Json(serde_json::json!({
+        "data": leaves,
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "totalPages": (total as f64 / limit as f64).ceil() as i32
+    }))
 }
 
 pub async fn create_leave(
