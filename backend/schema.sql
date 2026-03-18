@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS leaves (
     end_date TEXT NOT NULL,
     total_days INTEGER NOT NULL,
     reason TEXT,
+    attachment TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     approved_by BIGINT REFERENCES users(id),
     approved_at TEXT,
