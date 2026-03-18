@@ -20,16 +20,27 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { 
   CheckCircle, 
   XCircle, 
   Clock, 
   Loader2,
-  Filter
+  Filter,
+  Calendar,
+  User,
+  FileText,
+  Paperclip
 } from "lucide-react";
 import { getLeaves, updateLeaveStatus, Leave, LeaveType } from '@/lib/api/leaves';
 import { getLeaveTypes } from '@/lib/api/leaves';
-import { useUser } from '@clerk/nextjs';
+import { useToast } from '@/components/ui/toast';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -46,12 +57,13 @@ const statusLabels: Record<string, Record<string, string>> = {
 
 export default function LeavesPage() {
   const { language } = useI18n();
-  const { user } = useUser();
+  const { showToast } = useToast();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
@@ -138,12 +150,13 @@ export default function LeavesPage() {
   const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
     setProcessingId(id);
     try {
-      // In production, get the manager's user ID from auth
       const approvedBy = 1; 
       await updateLeaveStatus(id, status, approvedBy);
       await fetchLeaves();
+      showToast(status === 'approved' ? 'Leave approved successfully!' : 'Leave rejected', status === 'approved' ? 'success' : 'error');
     } catch (error) {
       console.error('Failed to update leave status:', error);
+      showToast('Failed to update leave status', 'error');
     } finally {
       setProcessingId(null);
     }
@@ -205,7 +218,11 @@ export default function LeavesPage() {
               </TableHeader>
               <TableBody>
                 {leaves.map((leave) => (
-                  <TableRow key={leave.id}>
+                  <TableRow 
+                    key={leave.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelectedLeave(leave)}
+                  >
                     <TableCell className="font-medium">User #{leave.user_id}</TableCell>
                     <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
                     <TableCell>
@@ -220,7 +237,7 @@ export default function LeavesPage() {
                         {statusLabels[language]?.[leave.status] || leave.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       {leave.status === 'pending' && (
                         <div className="flex gap-2">
                           <Button 
@@ -265,6 +282,88 @@ export default function LeavesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedLeave} onOpenChange={() => setSelectedLeave(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave Request Details</DialogTitle>
+            <DialogDescription>
+              Detailed information for leave request #{selectedLeave?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedLeave && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Employee</p>
+                  <p className="font-medium">User #{selectedLeave.user_id}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Leave Period</p>
+                  <p className="font-medium">
+                    {selectedLeave.start_date} to {selectedLeave.end_date}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    ({selectedLeave.total_days} day{selectedLeave.total_days > 1 ? 's' : ''})
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Leave Type</p>
+                  <p className="font-medium">{getLeaveTypeName(selectedLeave.leave_type)}</p>
+                </div>
+              </div>
+
+              {selectedLeave.reason && (
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Reason</p>
+                    <p className="font-medium">{selectedLeave.reason}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedLeave.attachment && (
+                <div className="flex items-center gap-3">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Attachment</p>
+                    <a 
+                      href={selectedLeave.attachment} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      View Attachment
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <Badge className={statusColors[selectedLeave.status]}>
+                    {statusLabels[language]?.[selectedLeave.status] || selectedLeave.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
