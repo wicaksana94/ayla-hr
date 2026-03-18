@@ -80,13 +80,14 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">
+      <label htmlFor="sick-leave-file" className="text-sm font-medium">
         Attachment (Medical Certificate / Proof)
       </label>
       
       {!uploadedUrl ? (
         <div className="flex flex-col gap-2">
           <input
+            id="sick-leave-file"
             ref={inputRef}
             type="file"
             accept="image/*,.pdf"
