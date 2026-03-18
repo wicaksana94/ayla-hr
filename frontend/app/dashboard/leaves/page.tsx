@@ -4,20 +4,20 @@ import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,10 +27,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
   Loader2,
   Filter,
   Calendar,
@@ -42,9 +42,30 @@ import { getLeaves, updateLeaveStatus, Leave, LeaveType } from '@/lib/api/leaves
 import { getLeaveTypes } from '@/lib/api/leaves';
 import { useToast } from '@/components/ui/toast';
 
+// Helper to get proper attachment URL (handles both old filename and new UploadThing URL)
+const getAttachmentUrl = (attachment: string | null): string | null => {
+  if (!attachment) return null;
+
+  // If it's already a full URL, return as-is
+  if (attachment.startsWith('http://') || attachment.startsWith('https://')) {
+    return attachment;
+  }
+
+  // Otherwise, assume it's an old filename - construct URL for common file services
+  // This handles files that were uploaded before UploadThing was configured
+  // For now, return null as we can't access old files
+  // In production, you might want to migrate these to UploadThing or use a different storage
+  return null;
+};
+
+// Check if attachment is available (either URL or old filename)
+const hasAttachment = (attachment: string | null): boolean => {
+  return !!attachment && (attachment.startsWith('http://') || attachment.startsWith('https://'));
+};
+
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
-  approved: 'bg-green-100 text-green-700', 
+  approved: 'bg-green-100 text-green-700',
   rejected: 'bg-red-100 text-red-700',
 };
 
@@ -67,9 +88,9 @@ export default function LeavesPage() {
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { 
-        leaves: { 
-          title: 'Leave Requests', 
+      en: {
+        leaves: {
+          title: 'Leave Requests',
           subtitle: 'Manage employee leave requests',
           filter: 'Filter by status',
           all: 'All',
@@ -77,11 +98,11 @@ export default function LeavesPage() {
           approve: 'Approve',
           reject: 'Reject',
           processing: 'Processing...'
-        } 
+        }
       },
-      id: { 
-        leaves: { 
-          title: 'Permintaan Cuti', 
+      id: {
+        leaves: {
+          title: 'Permintaan Cuti',
           subtitle: 'Kelola permintaan cuti karyawan',
           filter: 'Filter berdasarkan status',
           all: 'Semua',
@@ -89,11 +110,11 @@ export default function LeavesPage() {
           approve: 'Setuju',
           reject: 'Tolak',
           processing: 'Memproses...'
-        } 
+        }
       },
-      es: { 
-        leaves: { 
-          title: 'Solicitudes de Permiso', 
+      es: {
+        leaves: {
+          title: 'Solicitudes de Permiso',
           subtitle: 'Gestionar solicitudes de permiso de empleados',
           filter: 'Filtrar por estado',
           all: 'Todos',
@@ -101,11 +122,11 @@ export default function LeavesPage() {
           approve: 'Aprobar',
           reject: 'Rechazar',
           processing: 'Procesando...'
-        } 
+        }
       },
-      zh: { 
-        leaves: { 
-          title: '请假申请', 
+      zh: {
+        leaves: {
+          title: '请假申请',
           subtitle: '管理员工请假申请',
           filter: '按状态筛选',
           all: '全部',
@@ -113,7 +134,7 @@ export default function LeavesPage() {
           approve: '批准',
           reject: '拒绝',
           processing: '处理中...'
-        } 
+        }
       },
     };
     const [category, keyPart] = key.split('.');
@@ -150,7 +171,7 @@ export default function LeavesPage() {
   const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
     setProcessingId(id);
     try {
-      const approvedBy = 1; 
+      const approvedBy = 1;
       await updateLeaveStatus(id, status, approvedBy);
       await fetchLeaves();
       showToast(status === 'approved' ? 'Leave approved successfully!' : 'Leave rejected', status === 'approved' ? 'success' : 'error');
@@ -218,8 +239,8 @@ export default function LeavesPage() {
               </TableHeader>
               <TableBody>
                 {leaves.map((leave) => (
-                  <TableRow 
-                    key={leave.id} 
+                  <TableRow
+                    key={leave.id}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => setSelectedLeave(leave)}
                   >
@@ -240,8 +261,8 @@ export default function LeavesPage() {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {leave.status === 'pending' && (
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="text-green-600 border-green-600 hover:bg-green-50"
                             onClick={() => handleStatusUpdate(leave.id, 'approved')}
@@ -256,7 +277,7 @@ export default function LeavesPage() {
                               </>
                             )}
                           </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             variant="outline"
                             className="text-red-600 border-red-600 hover:bg-red-50"
@@ -292,7 +313,7 @@ export default function LeavesPage() {
               Detailed information for leave request #{selectedLeave?.id}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedLeave && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -334,13 +355,13 @@ export default function LeavesPage() {
                 </div>
               )}
 
-              {selectedLeave.attachment && (
+              {hasAttachment(selectedLeave.attachment) && (
                 <div className="flex items-center gap-3">
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Attachment</p>
                     <a 
-                      href={selectedLeave.attachment} 
+                      href={getAttachmentUrl(selectedLeave.attachment) || '#'}
                       target="_blank" 
                       rel="noopener noreferrer"
                       download
