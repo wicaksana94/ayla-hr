@@ -27,6 +27,8 @@ export interface PaginatedResponse<T> {
   data: T[];
   page: number;
   limit: number;
+  total?: number;
+  totalPages?: number;
 }
 
 // Leave Types
@@ -41,18 +43,20 @@ export async function getLeaveTypes(): Promise<LeaveType[]> {
   return res.json();
 }
 
-// Leaves - List
+// Leaves - List with pagination and search
 export async function getLeaves(params?: { 
   user_id?: number; 
   status?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }): Promise<PaginatedResponse<Leave>> {
   const searchParams = new URLSearchParams();
   if (params?.user_id) searchParams.set('user_id', String(params.user_id));
   if (params?.status) searchParams.set('status', params.status);
   if (params?.page) searchParams.set('page', String(params.page));
   if (params?.limit) searchParams.set('limit', String(params.limit));
+  if (params?.search) searchParams.set('search', params.search);
   
   const res = await fetch(`${API_BASE}/api/leaves?${searchParams}`, { 
     cache: 'no-store' 

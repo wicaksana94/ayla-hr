@@ -1,25 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DataTable, Column } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +18,6 @@ import {
   XCircle,
   Clock,
   Loader2,
-  Filter,
   Calendar,
   User,
   FileText,
@@ -42,20 +27,15 @@ import { getLeaves, updateLeaveStatus, Leave, LeaveType } from '@/lib/api/leaves
 import { getLeaveTypes } from '@/lib/api/leaves';
 import { useToast } from '@/components/ui/toast';
 
-// Helper to get proper attachment URL (handles both old filename and new UploadThing URL)
+// Helper to get proper attachment URL
 const getAttachmentUrl = (attachment: string | null): string | null => {
   if (!attachment) return null;
-
-  // If it's already a full URL, return as-is
   if (attachment.startsWith('http://') || attachment.startsWith('https://')) {
     return attachment;
   }
-
-  // For old filenames, return as-is (might not work but at least shows link)
   return attachment;
 };
 
-// Helper to check if attachment is available (full URL from UploadThing)
 const hasAttachment = (attachment: string | null): boolean => {
   return !!attachment;
 };
@@ -69,8 +49,6 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, Record<string, string>> = {
   en: { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' },
   id: { pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' },
-  es: { pending: 'Pendiente', approved: 'Aprobado', rejected: 'Rechazado' },
-  zh: { pending: '待处理', approved: '已批准', rejected: '已拒绝' },
 };
 
 export default function LeavesPage() {
@@ -80,58 +58,20 @@ export default function LeavesPage() {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [search, setSearch] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
       en: {
-        leaves: {
-          title: 'Leave Requests',
-          subtitle: 'Manage employee leave requests',
-          filter: 'Filter by status',
-          all: 'All',
-          noRequests: 'No leave requests found',
-          approve: 'Approve',
-          reject: 'Reject',
-          processing: 'Processing...'
-        }
+        leaves: { title: 'Leave Requests', subtitle: 'Manage employee leave requests' }
       },
       id: {
-        leaves: {
-          title: 'Permintaan Cuti',
-          subtitle: 'Kelola permintaan cuti karyawan',
-          filter: 'Filter berdasarkan status',
-          all: 'Semua',
-          noRequests: 'Tidak ada permintaan cuti',
-          approve: 'Setuju',
-          reject: 'Tolak',
-          processing: 'Memproses...'
-        }
-      },
-      es: {
-        leaves: {
-          title: 'Solicitudes de Permiso',
-          subtitle: 'Gestionar solicitudes de permiso de empleados',
-          filter: 'Filtrar por estado',
-          all: 'Todos',
-          noRequests: 'No se encontraron solicitudes de permiso',
-          approve: 'Aprobar',
-          reject: 'Rechazar',
-          processing: 'Procesando...'
-        }
-      },
-      zh: {
-        leaves: {
-          title: '请假申请',
-          subtitle: '管理员工请假申请',
-          filter: '按状态筛选',
-          all: '全部',
-          noRequests: '未找到请假申请',
-          approve: '批准',
-          reject: '拒绝',
-          processing: '处理中...'
-        }
+        leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola permintaan cuti karyawan' }
       },
     };
     const [category, keyPart] = key.split('.');
@@ -139,11 +79,16 @@ export default function LeavesPage() {
   };
 
   const fetchLeaves = async () => {
+    setLoading(true);
     try {
-      const params: any = { page: 1, limit: 100 };
+      const params: any = { page, limit: 10 };
       if (filterStatus !== 'all') params.status = filterStatus;
+      if (search) params.search = search;
+      
       const data = await getLeaves(params);
       setLeaves(data.data);
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error('Failed to fetch leaves:', error);
     } finally {
@@ -161,9 +106,12 @@ export default function LeavesPage() {
   };
 
   useEffect(() => {
-    fetchLeaves();
     fetchLeaveTypes();
-  }, [filterStatus]);
+  }, []);
+
+  useEffect(() => {
+    fetchLeaves();
+  }, [filterStatus, page, search]);
 
   const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
     setProcessingId(id);
@@ -185,6 +133,44 @@ export default function LeavesPage() {
     return type?.name || code;
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleSearch = (searchValue: string) => {
+    setSearch(searchValue);
+    setPage(1); // Reset to first page on search
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterStatus(value);
+    setPage(1); // Reset to first page on filter
+  };
+
+  const columns: Column<Leave>[] = [
+    { key: 'user_id', header: 'Employee', render: (item) => `User #${item.user_id}` },
+    { key: 'leave_type', header: 'Type', render: (item) => getLeaveTypeName(item.leave_type) },
+    { key: 'dates', header: 'Dates', render: (item) => `${item.start_date} - ${item.end_date}` },
+    { key: 'total_days', header: 'Days' },
+    { key: 'reason', header: 'Reason', render: (item) => item.reason || '-' },
+    { 
+      key: 'status', 
+      header: 'Status', 
+      render: (item) => (
+        <Badge className={statusColors[item.status]}>
+          {statusLabels[language]?.[item.status] || item.status}
+        </Badge>
+      )
+    },
+  ];
+
+  const filterOptions = [
+    { value: 'all', label: t('leaves.all') || 'All' },
+    { value: 'pending', label: statusLabels[language]?.pending || 'Pending' },
+    { value: 'approved', label: statusLabels[language]?.approved || 'Approved' },
+    { value: 'rejected', label: statusLabels[language]?.rejected || 'Rejected' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -192,112 +178,58 @@ export default function LeavesPage() {
         <p className="text-muted-foreground">{t('leaves.subtitle')}</p>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{t('leaves.filter')}:</span>
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('leaves.all')}</SelectItem>
-            <SelectItem value="pending">{statusLabels[language]?.pending || 'Pending'}</SelectItem>
-            <SelectItem value="approved">{statusLabels[language]?.approved || 'Approved'}</SelectItem>
-            <SelectItem value="rejected">{statusLabels[language]?.rejected || 'Rejected'}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : leaves.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              {t('leaves.noRequests')}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Days</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaves.map((leave) => (
-                  <TableRow
-                    key={leave.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedLeave(leave)}
+        <CardContent className="p-6">
+          <DataTable
+            columns={columns}
+            data={leaves}
+            loading={loading}
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={10}
+            searchPlaceholder="Search by reason or type..."
+            filterOptions={filterOptions}
+            filterValue={filterStatus}
+            onPageChange={handlePageChange}
+            onSearch={handleSearch}
+            onFilterChange={handleFilterChange}
+            onRowClick={(item) => setSelectedLeave(item)}
+            renderActions={(item) => (
+              item.status === 'pending' && (
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-green-600 border-green-600 hover:bg-green-50"
+                    onClick={() => handleStatusUpdate(item.id, 'approved')}
+                    disabled={processingId === item.id}
                   >
-                    <TableCell className="font-medium">User #{leave.user_id}</TableCell>
-                    <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
-                    <TableCell>
-                      {leave.start_date} - {leave.end_date}
-                    </TableCell>
-                    <TableCell>{leave.total_days}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {leave.reason || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[leave.status]}>
-                        {statusLabels[language]?.[leave.status] || leave.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {leave.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-600 hover:bg-green-50"
-                            onClick={() => handleStatusUpdate(leave.id, 'approved')}
-                            disabled={processingId === leave.id}
-                          >
-                            {processingId === leave.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                {t('leaves.approve')}
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => handleStatusUpdate(leave.id, 'rejected')}
-                            disabled={processingId === leave.id}
-                          >
-                            {processingId === leave.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <XCircle className="h-4 w-4 mr-1" />
-                                {t('leaves.reject')}
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                    {processingId === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    onClick={() => handleStatusUpdate(item.id, 'rejected')}
+                    disabled={processingId === item.id}
+                  >
+                    {processingId === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )
+            )}
+          />
         </CardContent>
       </Card>
 
