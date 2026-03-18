@@ -1,17 +1,38 @@
 'use client';
 
 import { useState, useRef } from "react";
+import { generateReactHelpers } from "@uploadthing/react";
+import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
 interface FileUploadProps {
   onUploadComplete?: (url: string) => void;
   value?: string;
 }
 
+const { useUploadThing } = generateReactHelpers<OurFileRouter>();
+
 export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(value || null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(value || null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { startUpload, isUploading } = useUploadThing("sickLeave", {
+    onClientUploadComplete: (res) => {
+      if (res && res[0]) {
+        const url = res[0].url;
+        setUploadedUrl(url);
+        onUploadComplete?.(url);
+      }
+      setUploading(false);
+    },
+    onUploadError: (error) => {
+      console.error("Upload error:", error);
+      setError(error.message || "Upload failed");
+      setUploading(false);
+    },
+  });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -33,6 +54,7 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
     }
 
     setError(null);
+    setUploading(true);
     
     // Create preview for images
     if (file.type.startsWith('image/')) {
@@ -43,17 +65,17 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
       reader.readAsDataURL(file);
     }
 
-    // TODO: Replace with actual upload to UploadThing/S3/Cloudinary
-    // For now, we'll use the file directly (in production, upload to storage)
-    setUploading(true);
-    
-    // Simulate upload delay - Replace with actual upload
-    setTimeout(() => {
-      setUploading(false);
-      // For now, just pass the file name as placeholder
-      // In production: upload to storage and get the URL
-      onUploadComplete?.(file.name);
-    }, 1000);
+    // Upload to UploadThing
+    await startUpload([file]);
+  };
+
+  const handleRemove = () => {
+    setPreview(null);
+    setUploadedUrl(null);
+    onUploadComplete?.("");
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   };
 
   return (
@@ -61,31 +83,48 @@ export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) 
       <label className="text-sm font-medium">
         Attachment (Medical Certificate / Proof)
       </label>
-      <div className="flex flex-col gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*,.pdf"
-          onChange={handleFileChange}
-          disabled={uploading}
-          className="block w-full text-sm text-slate-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
-            file:text-sm file:font-semibold
-            file:bg-violet-50 file:text-violet-700
-            hover:file:bg-violet-100
-          "
-        />
-        {uploading && <span className="text-sm text-muted-foreground">Processing...</span>}
-      </div>
+      
+      {!uploadedUrl ? (
+        <div className="flex flex-col gap-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*,.pdf"
+            onChange={handleFileChange}
+            disabled={uploading || isUploading}
+            className="block w-full text-sm text-slate-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-violet-50 file:text-violet-700
+              hover:file:bg-violet-100
+            "
+          />
+          {(uploading || isUploading) && (
+            <span className="text-sm text-muted-foreground">Uploading...</span>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+          <div className="flex-1">
+            <p className="text-sm font-medium">✓ File uploaded</p>
+            <p className="text-xs text-muted-foreground truncate max-w-xs">{uploadedUrl.split('/').pop()}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="text-sm text-red-500 hover:text-red-700"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+      
       {error && <p className="text-sm text-red-500">{error}</p>}
-      {preview && (
+      {preview && !uploadedUrl && (
         <div className="mt-2">
           <img src={preview} alt="Preview" className="max-w-xs rounded-lg border" />
         </div>
-      )}
-      {value && !error && (
-        <p className="text-sm text-green-600">✓ File attached</p>
       )}
       <p className="text-xs text-muted-foreground">
         Accepted: Images (JPG, PNG) or PDF. Max 4MB.
