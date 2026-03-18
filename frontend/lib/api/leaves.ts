@@ -34,7 +34,10 @@ export async function getLeaveTypes(): Promise<LeaveType[]> {
   const res = await fetch(`${API_BASE}/api/leave-types`, { 
     cache: 'no-store' 
   });
-  if (!res.ok) throw new Error('Failed to fetch leave types');
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Failed to fetch leave types');
+  }
   return res.json();
 }
 
@@ -54,7 +57,10 @@ export async function getLeaves(params?: {
   const res = await fetch(`${API_BASE}/api/leaves?${searchParams}`, { 
     cache: 'no-store' 
   });
-  if (!res.ok) throw new Error('Failed to fetch leaves');
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Failed to fetch leaves');
+  }
   return res.json();
 }
 
@@ -73,7 +79,10 @@ export async function createLeave(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to create leave request');
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Failed to create leave request');
+  }
   return res.json();
 }
 
@@ -88,6 +97,9 @@ export async function updateLeaveStatus(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, approved_by: approvedBy }),
   });
-  if (!res.ok) throw new Error('Failed to update leave status');
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Failed to update leave status');
+  }
   return res.json();
 }

@@ -23,6 +23,7 @@ import { DateRange } from "react-day-picker";
 import { useUser } from '@clerk/nextjs';
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
 import { SickLeaveUploader } from "@/components/uploadthing/SickLeaveUploader";
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -60,6 +61,7 @@ export default function MyLeavePage() {
         setLeaveHistory(historyData.data);
       } catch (error) {
         console.error('Failed to fetch data:', error);
+        toast.error('Failed to load data. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -69,12 +71,15 @@ export default function MyLeavePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leaveType || !selectedRange?.from || !selectedRange?.to) return;
+    if (!leaveType || !selectedRange?.from || !selectedRange?.to) {
+      toast.error(t('myLeave.fillAllFields') || 'Please fill all required fields');
+      return;
+    }
 
     setSubmitting(true);
     try {
-      // In production, get user ID from Clerk
-      const userId = 1; // Placeholder
+      // Get user ID from Clerk - use externalId or fallback to a default
+      const userId = user?.externalId ? parseInt(user.externalId) : 1;
       
       await createLeave({
         user_id: userId,
@@ -86,6 +91,7 @@ export default function MyLeavePage() {
         attachment: attachment || undefined,
       });
 
+      toast.success(t('myLeave.submitSuccess') || 'Leave request submitted successfully!');
       setSubmitSuccess(true);
       setLeaveType('');
       setSelectedRange(undefined);
@@ -99,6 +105,7 @@ export default function MyLeavePage() {
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (error) {
       console.error('Failed to submit leave:', error);
+      toast.error(t('myLeave.submitError') || 'Failed to submit leave request. Please try again.');
     } finally {
       setSubmitting(false);
     }
