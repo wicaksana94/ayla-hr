@@ -20,7 +20,6 @@ import { format, differenceInDays } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Loader2, CheckCircle, XCircle, Paperclip } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
-import { useUser } from '@clerk/nextjs';
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
 import { SickLeaveUploader } from "@/components/uploadthing/SickLeaveUploader";
 import { toast } from 'sonner';
@@ -34,7 +33,6 @@ const statusColors: Record<string, string> = {
 export default function MyLeavePage() {
   const { language } = useI18n();
   const t = useTranslations();
-  const { user } = useUser();
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
   const [leaveType, setLeaveType] = useState('');
   const [reason, setReason] = useState('');
@@ -78,8 +76,8 @@ export default function MyLeavePage() {
 
     setSubmitting(true);
     try {
-      // Get user ID from Clerk - use externalId or fallback to a default
-      const userId = user?.externalId ? parseInt(user.externalId) : 1;
+      // Use default user ID (for demo without Clerk)
+      const userId = 1;
       
       await createLeave({
         user_id: userId,
