@@ -45,22 +45,19 @@ import { useToast } from '@/components/ui/toast';
 // Helper to get proper attachment URL (handles both old filename and new UploadThing URL)
 const getAttachmentUrl = (attachment: string | null): string | null => {
   if (!attachment) return null;
-
+  
   // If it's already a full URL, return as-is
   if (attachment.startsWith('http://') || attachment.startsWith('https://')) {
     return attachment;
   }
-
-  // Otherwise, assume it's an old filename - construct URL for common file services
-  // This handles files that were uploaded before UploadThing was configured
-  // For now, return null as we can't access old files
-  // In production, you might want to migrate these to UploadThing or use a different storage
-  return null;
+  
+  // For old filenames, return as-is (might not work but at least shows link)
+  return attachment;
 };
 
-// Check if attachment is available (either URL or old filename)
+// Helper to check if attachment is available (full URL from UploadThing)
 const hasAttachment = (attachment: string | null): boolean => {
-  return !!attachment && (attachment.startsWith('http://') || attachment.startsWith('https://'));
+  return !!attachment;
 };
 
 const statusColors: Record<string, string> = {
@@ -360,9 +357,9 @@ export default function LeavesPage() {
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Attachment</p>
-                    <a 
+                    <a
                       href={getAttachmentUrl(selectedLeave.attachment) || '#'}
-                      target="_blank" 
+                      target="_blank"
                       rel="noopener noreferrer"
                       download
                       className="text-blue-600 hover:underline font-medium flex items-center gap-1"
