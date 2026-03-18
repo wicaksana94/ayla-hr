@@ -2,14 +2,14 @@
 
 import { useState, useRef } from "react";
 import { generateReactHelpers } from "@uploadthing/react";
-import type { OurFileRouter } from "@/app/api/uploadthing/core";
+import type { UploadRouter } from "@/app/api/uploadthing/core";
 
 interface FileUploadProps {
   onUploadComplete?: (url: string) => void;
   value?: string;
 }
 
-const { useUploadThing } = generateReactHelpers<OurFileRouter>();
+const { useUploadThing } = generateReactHelpers<UploadRouter>();
 
 export function SickLeaveUploader({ onUploadComplete, value }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
