@@ -11,23 +11,14 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   BarChart3, 
-  TrendingUp, 
   Clock, 
   CheckCircle, 
   XCircle,
   Loader2,
-  Calendar,
   Download
 } from "lucide-react";
 import { getLeaves, Leave, getEmployees } from '@/lib/api/leaves';
@@ -38,43 +29,10 @@ export default function ReportsPage() {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [employees, setEmployees] = useState<{id: number; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reportPage, setReportPage] = useState(1);
   const REPORT_PAGE_SIZE = 10;
-
-  // Filter leaves by date range
-  const filteredLeaves = leaves.filter(leave => {
-    if (!startDate && !endDate) return true;
-    const leaveStart = new Date(leave.start_date);
-    if (startDate && leaveStart < new Date(startDate)) return false;
-    if (endDate && leaveStart > new Date(endDate)) return false;
-    return true;
-  });
-
-  const getEmployeeName = (userId: number | null) => {
-    if (!userId) return '-';
-    const emp = employees.find(e => e.id === userId);
-    return emp?.name || `User #${userId}`;
-  };
-
-  const handleExportXLSX = () => {
-    const data = filteredLeaves.map(leave => ({
-      'Employee': getEmployeeName(leave.user_id),
-      'Leave Type': leave.leave_type,
-      'Start Date': leave.start_date,
-      'End Date': leave.end_date,
-      'Total Days': leave.total_days,
-      'Reason': leave.reason || '-',
-      'Status': leave.status,
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Leave Report');
-    XLSX.writeFile(wb, `leave-report-${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
@@ -118,46 +76,6 @@ export default function ReportsPage() {
           noData: 'Tidak ada data'
         } 
       },
-      es: { 
-        reports: { 
-          title: 'Informes', 
-          subtitle: 'Análisis e informes de RRHH',
-          leave: 'Informes de Permiso',
-          overview: 'Resumen',
-          total: 'Total Solicitudes',
-          pending: 'Pendiente',
-          approved: 'Aprobado',
-          rejected: 'Rechazado',
-          byType: 'Por Tipo',
-          byStatus: 'Por Estado',
-          recent: 'Solicitudes Recientes',
-          period: 'Período',
-          all: 'Todo',
-          thisMonth: 'Este Mes',
-          thisYear: 'Este Año',
-          noData: 'Sin datos'
-        } 
-      },
-      zh: { 
-        reports: { 
-          title: '报告', 
-          subtitle: 'HR分析和报告',
-          leave: '请假报告',
-          overview: '概览',
-          total: '总申请数',
-          pending: '待处理',
-          approved: '已批准',
-          rejected: '已拒绝',
-          byType: '按类型',
-          byStatus: '按状态',
-          recent: '最近申请',
-          period: '时间段',
-          all: '全部',
-          thisMonth: '本月',
-          thisYear: '今年',
-          noData: '暂无数据'
-        } 
-      },
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -180,6 +98,38 @@ export default function ReportsPage() {
     };
     fetchData();
   }, []);
+
+  // Filter leaves by date range
+  const filteredLeaves = leaves.filter(leave => {
+    if (!startDate && !endDate) return true;
+    const leaveStart = new Date(leave.start_date);
+    if (startDate && leaveStart < new Date(startDate)) return false;
+    if (endDate && leaveStart > new Date(endDate)) return false;
+    return true;
+  });
+
+  const getEmployeeName = (userId: number | null) => {
+    if (!userId) return '-';
+    const emp = employees.find(e => e.id === userId);
+    return emp?.name || `User #${userId}`;
+  };
+
+  const handleExportXLSX = () => {
+    const data = filteredLeaves.map(leave => ({
+      'Employee': getEmployeeName(leave.user_id),
+      'Leave Type': leave.leave_type,
+      'Start Date': leave.start_date,
+      'End Date': leave.end_date,
+      'Total Days': leave.total_days,
+      'Reason': leave.reason || '-',
+      'Status': leave.status,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Leave Report');
+    XLSX.writeFile(wb, `leave-report-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   // Calculate statistics
   const stats = {
@@ -357,63 +307,65 @@ export default function ReportsPage() {
               {filteredLeaves.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">{t('reports.noData')}</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Dates</TableHead>
-                      <TableHead>Days</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedLeaves.map((leave) => (
-                      <TableRow key={leave.id}>
-                        <TableCell className="font-medium">{getEmployeeName(leave.user_id)}</TableCell>
-                        <TableCell className="font-medium capitalize">{leave.leave_type}</TableCell>
-                        <TableCell>{leave.start_date} - {leave.end_date}</TableCell>
-                        <TableCell>{leave.total_days}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            leave.status === 'approved' ? 'bg-green-100 text-green-700' :
-                            leave.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {t(`reports.${leave.status}`)}
-                          </span>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Dates</TableHead>
+                        <TableHead>Days</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                
-                {/* Pagination */}
-                {totalReportPages > 1 && (
-                  <div className="flex items-center justify-between py-4">
-                    <div className="text-sm text-muted-foreground">
-                      Page {reportPage} of {totalReportPages}
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedLeaves.map((leave) => (
+                        <TableRow key={leave.id}>
+                          <TableCell className="font-medium">{getEmployeeName(leave.user_id)}</TableCell>
+                          <TableCell className="font-medium capitalize">{leave.leave_type}</TableCell>
+                          <TableCell>{leave.start_date} - {leave.end_date}</TableCell>
+                          <TableCell>{leave.total_days}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              leave.status === 'approved' ? 'bg-green-100 text-green-700' :
+                              leave.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {t(`reports.${leave.status}`)}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {/* Pagination */}
+                  {totalReportPages > 1 && (
+                    <div className="flex items-center justify-between py-4">
+                      <div className="text-sm text-muted-foreground">
+                        Page {reportPage} of {totalReportPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReportPage(p => Math.max(1, p - 1))}
+                          disabled={reportPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReportPage(p => Math.min(totalReportPages, p + 1))}
+                          disabled={reportPage === totalReportPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setReportPage(p => Math.max(1, p - 1))}
-                        disabled={reportPage === 1}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setReportPage(p => Math.min(totalReportPages, p + 1))}
-                        disabled={reportPage === totalReportPages}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
