@@ -17,7 +17,7 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { format, differenceInDays } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Loader2, CheckCircle, XCircle, Paperclip } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Loader2, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { createLeave, getLeaves, getLeaveTypes, Leave, LeaveType } from '@/lib/api/leaves';
@@ -111,26 +111,20 @@ export default function MyLeavePage() {
     }
   };
 
+  // Get leave type label
   const getLeaveTypeLabel = (code: string) => {
     return t(`leaveTypes.${code}`) || code;
   };
 
+  // Get status label
   const getStatusLabel = (status: string) => {
     return t(`myLeave.${status}`) || status;
   };
 
-  // Calculate leave balances
-  const balances = {
-    annual: 12,
-    sick: 10,
-    maternity: 90,
-    marriage: 3,
-    bereavement: 3,
-    baptism: 2,
-    paid: 5,
-    paid_leave: 5,
-    unpaid: Infinity,
-    unpaid_leave: Infinity,
+  // Get leave balance from API data
+  const getLeaveBalance = (code: string, annualLimit: number, isPaid: boolean) => {
+    if (!isPaid) return '∞';
+    return annualLimit;
   };
 
   return (
@@ -142,14 +136,14 @@ export default function MyLeavePage() {
 
       {/* Leave Balance Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        {leaveTypes.map((type) => (
+        {leaveTypes.slice(0, 4).map((type) => (
           <Card key={type.code}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">{t(`leaveTypes.${type.code}`)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {['unpaid', 'unpaid_leave'].includes(type.code) ? '∞' : balances[type.code as keyof typeof balances] || 0}
+                {getLeaveBalance(type.code, type.annual_limit, type.is_paid)}
               </div>
               <p className="text-xs text-muted-foreground">
                 {type.is_paid ? 'Paid' : 'Unpaid'}
