@@ -32,7 +32,7 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reportPage, setReportPage] = useState(1);
-  const REPORT_PAGE_SIZE = 10;
+  const REPORT_PAGE_SIZE = 5;
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {

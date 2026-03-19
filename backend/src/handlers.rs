@@ -133,9 +133,9 @@ pub async fn update_employee(
 ) -> Result<Json<User>, (StatusCode, String)> {
     match sqlx::query_as::<_, User>(
         "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), 
-         department_id = $4, position_id = $5, manager_id = $6, is_active = COALESCE($7, is_active)
+         department_id = $4, position_id = $5, manager_id = $6, is_active = COALESCE($7, is_active), theme = $9
          WHERE id = $8 
-         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active"
+         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme"
     )
     .bind(payload.name)
     .bind(payload.email)
@@ -145,6 +145,7 @@ pub async fn update_employee(
     .bind(payload.manager_id)
     .bind(payload.is_active)
     .bind(id)
+    .bind(payload.theme)
     .fetch_one(&pool)
     .await
     {

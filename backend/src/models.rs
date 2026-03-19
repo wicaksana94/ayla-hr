@@ -263,6 +263,7 @@ pub struct UpdateEmployeeRequest {
     pub position_id: Option<i32>,
     pub manager_id: Option<i32>,
     pub is_active: Option<bool>,
+    pub theme: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -125,16 +125,6 @@ export default function LeavesPage() {
   }, [filterStatus, page, search]);
 
   const handleStatusUpdate = async (id: number, newStatus: 'approved' | 'rejected') => {
-    // Find the leave to check its current status
-    const leave = leaves.find(l => l.id === id);
-    if (!leave) return;
-    
-    // Prevent updating if already approved or rejected
-    if (leave.status === 'approved' || leave.status === 'rejected') {
-      showToast('This leave request has already been processed', 'error');
-      return;
-    }
-    
     setProcessingId(id);
     try {
       const approvedBy = 1;
