@@ -123,8 +123,17 @@ function PositionsContent() {
     setError(null);
     setIsSaving(true);
     try {
+      // Convert level string to number: staff=1, manager=2, senior_manager=3
       const levelMap: Record<string, number> = { 'staff': 1, 'manager': 2, 'senior_manager': 3 };
-      const level = editingPosition.level ? (typeof editingPosition.level === 'string' ? levelMap[editingPosition.level] || parseInt(editingPosition.level) : editingPosition.level) : null;
+      let levelValue: number | null = null;
+      
+      if (editingPosition.level) {
+        if (typeof editingPosition.level === 'string') {
+          levelValue = levelMap[editingPosition.level] || parseInt(editingPosition.level);
+        } else {
+          levelValue = editingPosition.level as unknown as number;
+        }
+      }
       
       const res = await fetch(`${apiUrl}/api/positions/${editingPosition.id}`, {
         method: 'PUT',
@@ -132,7 +141,7 @@ function PositionsContent() {
         body: JSON.stringify({ 
           name: editingPosition.name, 
           department_id: editingPosition.department_id,
-          level: level
+          level: levelValue
         }),
       });
       if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
@@ -231,7 +240,7 @@ function PositionsContent() {
               <div className="space-y-2">
                 <label>{t('positions.level')}</label>
                 <Select 
-                  value={editingPosition.level?.toString() || ''} 
+                  value={editingPosition.level ? String(editingPosition.level) : ''} 
                   onValueChange={(val) => setEditingPosition({...editingPosition, level: val as any})}
                 >
                   <SelectTrigger><SelectValue placeholder={t('positions.selectLevel')} /></SelectTrigger>

@@ -29,13 +29,6 @@
     "approved": "Disetujui",
     "rejected": "Ditolak"
   },
-  "leaves": {
-    "title": "Permintaan Cuti",
-    "all": "Semua"
-  },
-  "positions": {
-    "edit": "Edit"
-  },
   "leaveTypes": {
     "annual": "Cuti Tahunan",
     "sick": "Cuti Sakit",
@@ -67,5 +60,12 @@
     "approved": "Disetujui",
     "rejected": "Ditolak",
     "noHistory": "Belum ada permintaan cuti"
+  },
+  "leaves": {
+    "title": "Permintaan Cuti",
+    "all": "Semua"
+  },
+  "positions": {
+    "edit": "Edit"
   }
 }

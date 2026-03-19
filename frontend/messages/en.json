@@ -29,13 +29,6 @@
     "approved": "Approved",
     "rejected": "Rejected"
   },
-  "leaves": {
-    "title": "Leave Requests",
-    "all": "All"
-  },
-  "positions": {
-    "edit": "Edit"
-  },
   "leaveTypes": {
     "annual": "Annual Leave",
     "sick": "Sick Leave",
@@ -67,5 +60,12 @@
     "approved": "Approved",
     "rejected": "Rejected",
     "noHistory": "No leave requests yet"
+  },
+  "leaves": {
+    "title": "Leave Requests",
+    "all": "All"
+  },
+  "positions": {
+    "edit": "Edit"
   }
 }
