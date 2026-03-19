@@ -31,7 +31,6 @@ const statusColors: Record<string, string> = {
 };
 
 export default function MyLeavePage() {
-  const { language } = useI18n();
   const t = useTranslations();
   const { showToast } = useToast();
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
@@ -49,13 +48,16 @@ export default function MyLeavePage() {
     ? differenceInDays(selectedRange.to, selectedRange.from) + 1 
     : 0;
 
+  // Current user ID (for demo - in production get from auth)
+  const currentUserId = 1;
+
   // Fetch leave types and history
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [typesData, historyData] = await Promise.all([
           getLeaveTypes(),
-          getLeaves({ page: 1, limit: 10 })
+          getLeaves({ user_id: currentUserId, page: 1, limit: 10 })
         ]);
         setLeaveTypes(typesData);
         setLeaveHistory(historyData.data);
@@ -99,7 +101,7 @@ export default function MyLeavePage() {
       setAttachment('');
       
       // Refresh history
-      const historyData = await getLeaves({ page: 1, limit: 10 });
+      const historyData = await getLeaves({ user_id: currentUserId, page: 1, limit: 10 });
       setLeaveHistory(historyData.data);
       
       setTimeout(() => setSubmitSuccess(false), 3000);
