@@ -24,7 +24,17 @@
     "departments": "Departemen",
     "positions": "Posisi",
     "recentLeaveRequests": "Permintaan Cuti Terbaru",
-    "quickActions": "Aksi Cepat"
+    "quickActions": "Aksi Cepat",
+    "pending": "Menunggu",
+    "approved": "Disetujui",
+    "rejected": "Ditolak"
+  },
+  "leaves": {
+    "title": "Permintaan Cuti",
+    "all": "Semua"
+  },
+  "positions": {
+    "edit": "Edit"
   },
   "leaveTypes": {
     "annual": "Cuti Tahunan",

@@ -327,19 +327,19 @@ export default function EmployeesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">{t('employees.noManager') || 'Tanpa Manager'}</SelectItem>
-                    {newEmployee.department_id && (
+                    {newEmployee.department_id && newEmployee.department_id !== '' && (
                       <>
                         <SelectLabel>
                           {departments.find(d => d.id === parseInt(newEmployee.department_id))?.name || 'Managers'}
                         </SelectLabel>
-                        {employees
+                        {(employees || [])
                           .filter(e => e.department_id === parseInt(newEmployee.department_id) && e.id !== parseInt(newEmployee.clerk_id || '0'))
                           .map(emp => (
                             <SelectItem key={emp.id} value={emp.id.toString()}>
                               {emp.name} - {positions.find(p => p.id === emp.position_id)?.name || ''}
                             </SelectItem>
                           ))}
-                        {employees.filter(e => e.department_id === parseInt(newEmployee.department_id)).length === 0 && (
+                        {(employees || []).filter(e => e.department_id === parseInt(newEmployee.department_id)).length === 0 && (
                           <div className="p-2 text-center text-sm text-muted-foreground">
                             {language === 'id' ? 'Belum ada karyawan di departemen ini' : 'No employees in this department'}
                           </div>

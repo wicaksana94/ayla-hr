@@ -41,6 +41,8 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [reportPage, setReportPage] = useState(1);
+  const REPORT_PAGE_SIZE = 10;
 
   // Filter leaves by date range
   const filteredLeaves = leaves.filter(leave => {
@@ -196,6 +198,10 @@ export default function ReportsPage() {
     return acc;
   }, {} as Record<string, number>);
 
+  // Pagination
+  const totalReportPages = Math.ceil(filteredLeaves.length / REPORT_PAGE_SIZE);
+  const paginatedLeaves = filteredLeaves.slice((reportPage - 1) * REPORT_PAGE_SIZE, reportPage * REPORT_PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -210,7 +216,7 @@ export default function ReportsPage() {
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
             className="w-40"
-            placeholder="Start Date"
+            placeholder="Start date"
           />
           <span className="text-muted-foreground">-</span>
           <Input 
@@ -218,7 +224,7 @@ export default function ReportsPage() {
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
             className="w-40"
-            placeholder="End Date"
+            placeholder="End date"
           />
           <Button variant="outline" onClick={() => { setStartDate(''); setEndDate(''); }}>
             Clear
@@ -362,7 +368,7 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredLeaves.slice(0, 10).map((leave) => (
+                    {paginatedLeaves.map((leave) => (
                       <TableRow key={leave.id}>
                         <TableCell className="font-medium">{getEmployeeName(leave.user_id)}</TableCell>
                         <TableCell className="font-medium capitalize">{leave.leave_type}</TableCell>
@@ -381,6 +387,33 @@ export default function ReportsPage() {
                     ))}
                   </TableBody>
                 </Table>
+                
+                {/* Pagination */}
+                {totalReportPages > 1 && (
+                  <div className="flex items-center justify-between py-4">
+                    <div className="text-sm text-muted-foreground">
+                      Page {reportPage} of {totalReportPages}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReportPage(p => Math.max(1, p - 1))}
+                        disabled={reportPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReportPage(p => Math.min(totalReportPages, p + 1))}
+                        disabled={reportPage === totalReportPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               )}
             </CardContent>
           </Card>

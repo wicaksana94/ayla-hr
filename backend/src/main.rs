@@ -123,6 +123,7 @@ async fn main() {
         // Position routes
         .route("/api/positions", get(handlers::list_positions))
         .route("/api/positions", post(handlers::create_position))
+        .route("/api/positions/:id", put(handlers::update_position))
         .route("/api/positions/:id", delete(handlers::delete_position))
         
         // Leave type routes

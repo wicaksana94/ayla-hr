@@ -335,6 +335,28 @@ pub async fn delete_position(
     }
 }
 
+pub async fn update_position(
+    State(pool): State<PgPool>,
+    Path(id): Path<i32>,
+    Json(payload): Json<UpdatePositionRequest>,
+) -> Result<Json<Position>, (StatusCode, String)> {
+    match sqlx::query_as::<_, Position>(
+        "UPDATE positions SET name = COALESCE($1, name), department_id = $2, level = COALESCE($3, level)
+         WHERE id = $4
+         RETURNING id, name, department_id, level, access_level"
+    )
+    .bind(payload.name)
+    .bind(payload.department_id)
+    .bind(payload.level)
+    .bind(id)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(pos) => Ok(Json(pos)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 // ============ Leave Type Handlers ============
 
 pub async fn list_leave_types(

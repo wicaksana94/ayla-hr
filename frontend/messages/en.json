@@ -24,7 +24,17 @@
     "departments": "Departments",
     "positions": "Positions",
     "recentLeaveRequests": "Recent Leave Requests",
-    "quickActions": "Quick Actions"
+    "quickActions": "Quick Actions",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "leaves": {
+    "title": "Leave Requests",
+    "all": "All"
+  },
+  "positions": {
+    "edit": "Edit"
   },
   "leaveTypes": {
     "annual": "Annual Leave",

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
 
 interface Position { id: number; name: string; department_id: number | null; level: string | null; access_level: string | null; }
 interface Department { id: number; name: string; }
@@ -31,6 +31,7 @@ function PositionsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [deletingPosition, setDeletingPosition] = useState<Position | null>(null);
   const [newPosition, setNewPosition] = useState({ name: '', department_id: '', level: '' });
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +118,30 @@ function PositionsContent() {
     finally { setIsSaving(false); }
   };
 
+  const handleEdit = async () => {
+    if (!editingPosition) return;
+    setError(null);
+    setIsSaving(true);
+    try {
+      const levelMap: Record<string, number> = { 'staff': 1, 'manager': 2, 'senior_manager': 3 };
+      const level = editingPosition.level ? (typeof editingPosition.level === 'string' ? levelMap[editingPosition.level] || parseInt(editingPosition.level) : editingPosition.level) : null;
+      
+      const res = await fetch(`${apiUrl}/api/positions/${editingPosition.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: editingPosition.name, 
+          department_id: editingPosition.department_id,
+          level: level
+        }),
+      });
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
+      await fetchData();
+      setEditingPosition(null);
+    } catch (err: any) { setError(err.message); }
+    finally { setIsSaving(false); }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /><span className="ml-2">{t('positions.loading')}</span></div>;
 
   return (
@@ -167,13 +192,67 @@ function PositionsContent() {
               positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pos) => {
                 const levelMap: Record<string, string> = { '1': 'Staff', '2': 'Manager', '3': 'Senior Manager' };
                 return (
-                  <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell>{pos.level ? levelMap[String(pos.level)] || pos.level : '-'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setDeletingPosition(pos)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                  <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell>{pos.level ? levelMap[String(pos.level)] || pos.level : '-'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setEditingPosition(pos)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => setDeletingPosition(pos)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
                 );
               })
             ) : (<TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('positions.noResults')}</TableCell></TableRow>)}
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      {/* Edit Position Dialog */}
+      <Dialog open={!!editingPosition} onOpenChange={() => { setEditingPosition(null); setError(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('positions.edit') || 'Edit Position'}: {editingPosition?.name}</DialogTitle>
+          </DialogHeader>
+          {editingPosition && (
+            <div className="space-y-4 py-4">
+              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
+              <div className="space-y-2">
+                <label>{t('positions.name')}</label>
+                <Input 
+                  value={editingPosition.name} 
+                  onChange={(e) => setEditingPosition({...editingPosition, name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label>{t('positions.department')}</label>
+                <Select 
+                  value={editingPosition.department_id?.toString() || ''} 
+                  onValueChange={(val) => setEditingPosition({...editingPosition, department_id: val ? parseInt(val) : null})}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {departments.map(dept => <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label>{t('positions.level')}</label>
+                <Select 
+                  value={editingPosition.level?.toString() || ''} 
+                  onValueChange={(val) => setEditingPosition({...editingPosition, level: val as any})}
+                >
+                  <SelectTrigger><SelectValue placeholder={t('positions.selectLevel')} /></SelectTrigger>
+                  <SelectContent>
+                    {POSITION_LEVELS.map(level => (
+                      <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingPosition(null); setError(null); }}>{t('positions.cancel')}</Button>
+            <Button onClick={handleEdit} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('positions.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deletingPosition} onOpenChange={() => { setDeletingPosition(null); setError(null); }}>
