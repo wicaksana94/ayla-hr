@@ -29,19 +29,19 @@ export default function DashboardPage() {
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
       en: {
-        dashboard: { welcome: 'Welcome to AylaHR', totalEmployees: 'Total Employees', pendingLeaves: 'Pending Leaves', departments: 'Departments', positions: 'Positions', recentLeaveRequests: 'Recent Leave Requests', quickActions: 'Quick Actions', thisMonth: '+12 this month', requiresApproval: 'Requires approval', allActive: 'All active', acrossAll: 'Across all departments', addEmployee: 'Add Employee', newLeave: 'New Leave', pending: 'Pending', approved: 'Approved', loading: 'Loading...' },
+        dashboard: { welcome: 'Welcome to AylaHR', totalEmployees: 'Total Employees', pendingLeaves: 'Pending Leaves', departments: 'Departments', positions: 'Positions', recentLeaveRequests: 'Recent Leave Requests', quickActions: 'Quick Actions', thisMonth: '+12 this month', requiresApproval: 'Requires approval', allActive: 'All active', acrossAll: 'Across all departments', addEmployee: 'Add Employee', newLeave: 'New Leave', pending: 'Pending', approved: 'Approved', rejected: 'Rejected', loading: 'Loading...' },
         common: { dashboard: 'Dashboard' }
       },
       id: {
-        dashboard: { welcome: 'Selamat Datang di AylaHR', totalEmployees: 'Total Karyawan', pendingLeaves: 'Cuti Menunggu', departments: 'Departemen', positions: 'Posisi', recentLeaveRequests: 'Permintaan Cuti Terbaru', quickActions: 'Aksi Cepat', thisMonth: '+12 bulan ini', requiresApproval: 'Memerlukan persetujuan', allActive: 'Semua aktif', acrossAll: 'Di semua departemen', addEmployee: 'Tambah Karyawan', newLeave: 'Cuti Baru', pending: 'Menunggu', approved: 'Disetujui', loading: 'Memuat...' },
+        dashboard: { welcome: 'Selamat Datang di AylaHR', totalEmployees: 'Total Karyawan', pendingLeaves: 'Cuti Menunggu', departments: 'Departemen', positions: 'Posisi', recentLeaveRequests: 'Permintaan Cuti Terbaru', quickActions: 'Aksi Cepat', thisMonth: '+12 bulan ini', requiresApproval: 'Memerlukan persetujuan', allActive: 'Semua aktif', acrossAll: 'Di semua departemen', addEmployee: 'Tambah Karyawan', newLeave: 'Cuti Baru', pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak', loading: 'Memuat...' },
         common: { dashboard: 'Dasbor' }
       },
       es: {
-        dashboard: { welcome: 'Bienvenido a AylaHR', totalEmployees: 'Total de Empleados', pendingLeaves: 'Permisos Pendientes', departments: 'Departamentos', positions: 'Posiciones', recentLeaveRequests: 'Solicitudes Recientes', quickActions: 'Acciones Rápidas', thisMonth: '+12 este mes', requiresApproval: 'Requiere aprobación', allActive: 'Todos activos', acrossAll: 'En todos los departamentos', addEmployee: 'Agregar Empleado', newLeave: 'Nuevo Permiso', pending: 'Pendiente', approved: 'Aprobado', loading: 'Cargando...' },
+        dashboard: { welcome: 'Bienvenido a AylaHR', totalEmployees: 'Total de Empleados', pendingLeaves: 'Permisos Pendientes', departments: 'Departamentos', positions: 'Posiciones', recentLeaveRequests: 'Solicitudes Recientes', quickActions: 'Acciones Rápidas', thisMonth: '+12 este mes', requiresApproval: 'Requiere aprobación', allActive: 'Todos activos', acrossAll: 'En todos los departamentos', addEmployee: 'Agregar Empleado', newLeave: 'Nuevo Permiso', pending: 'Pendiente', approved: 'Aprobado', rejected: 'Rechazado', loading: 'Cargando...' },
         common: { dashboard: 'Panel' }
       },
       zh: {
-        dashboard: { welcome: '欢迎使用 AylaHR', totalEmployees: '员工总数', pendingLeaves: '待处理请假', departments: '部门', positions: '职位', recentLeaveRequests: '最近请假申请', quickActions: '快速操作', thisMonth: '+12 本月', requiresApproval: '需要审批', allActive: '全部活跃', acrossAll: '在所有部门', addEmployee: '添加员工', newLeave: '新请假', pending: '待处理', approved: '已批准', loading: '加载中...' },
+        dashboard: { welcome: '欢迎使用 AylaHR', totalEmployees: '员工总数', pendingLeaves: '待处理请假', departments: '部门', positions: '职位', recentLeaveRequests: '最近请假申请', quickActions: '快速操作', thisMonth: '+12 本月', requiresApproval: '需要审批', allActive: '全部活跃', acrossAll: '在所有部门', addEmployee: '添加员工', newLeave: '新请假', pending: '待处理', approved: '已批准', rejected: '已拒绝', loading: '加载中...' },
         common: { dashboard: '仪表板' }
       }
     };

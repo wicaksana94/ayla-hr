@@ -19,6 +19,7 @@ interface SidebarProps {
   userRole?: Role;
   isOpen?: boolean;
   onClose?: () => void;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
 // Translation function
@@ -64,8 +65,14 @@ const getGroupTitle = (title: string): string => {
   return titleMap[title] || title;
 };
 
-export function Sidebar({ userRole = 'employee', isOpen = false, onClose }: SidebarProps) {
+export function Sidebar({ userRole = 'employee', isOpen = false, onClose, onCollapseChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleToggleCollapse = () => {
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    onCollapseChange?.(newCollapsed);
+  };
   const pathname = usePathname();
   const handleSignOut = useSignOut();
   const { language } = useI18n();
@@ -175,7 +182,7 @@ export function Sidebar({ userRole = 'employee', isOpen = false, onClose }: Side
 
         {/* Toggle Button */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={handleToggleCollapse}
           className="hidden md:flex absolute -right-3 top-7 z-10 h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >

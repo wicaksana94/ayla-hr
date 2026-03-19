@@ -69,10 +69,10 @@ export default function LeavesPage() {
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
       en: {
-        leaves: { title: 'Leave Requests', subtitle: 'Manage employee leave requests' }
+        leaves: { title: 'Leave Requests', subtitle: 'Manage employee leave requests', all: 'All' }
       },
       id: {
-        leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola permintaan cuti karyawan' }
+        leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola permintaan cuti karyawan', all: 'Semua' }
       },
     };
     const [category, keyPart] = key.split('.');
@@ -124,13 +124,23 @@ export default function LeavesPage() {
     fetchLeaves();
   }, [filterStatus, page, search]);
 
-  const handleStatusUpdate = async (id: number, status: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (id: number, newStatus: 'approved' | 'rejected') => {
+    // Find the leave to check its current status
+    const leave = leaves.find(l => l.id === id);
+    if (!leave) return;
+    
+    // Prevent updating if already approved or rejected
+    if (leave.status === 'approved' || leave.status === 'rejected') {
+      showToast('This leave request has already been processed', 'error');
+      return;
+    }
+    
     setProcessingId(id);
     try {
       const approvedBy = 1;
-      await updateLeaveStatus(id, status, approvedBy);
+      await updateLeaveStatus(id, newStatus, approvedBy);
       await fetchLeaves();
-      showToast(status === 'approved' ? 'Leave approved successfully!' : 'Leave rejected', status === 'approved' ? 'success' : 'error');
+      showToast(newStatus === 'approved' ? 'Leave approved successfully!' : 'Leave rejected', newStatus === 'approved' ? 'success' : 'error');
     } catch (error) {
       console.error('Failed to update leave status:', error);
       showToast('Failed to update leave status', 'error');

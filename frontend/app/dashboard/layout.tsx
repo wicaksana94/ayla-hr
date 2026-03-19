@@ -11,6 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { role: userRole, isLoading } = useUserRole();
 
   if (isLoading) {
@@ -31,10 +32,10 @@ export default function DashboardLayout({
         />
       )}
       
-      <Sidebar userRole={userRole} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar userRole={userRole} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onCollapseChange={setSidebarCollapsed} />
       
       {/* Main Content */}
-      <div className="md:ml-64 transition-all duration-300">
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="bg-background p-4 md:p-6">

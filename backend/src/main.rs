@@ -60,6 +60,18 @@ async fn run_migrations(pool: &sqlx::PgPool) {
         Ok(_) => println!("Migration: Added level column to positions"),
         Err(e) => println!("Migration note: {}", e),
     }
+
+    // Add theme column to users if it doesn't exist
+    let theme_result = sqlx::query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(20) DEFAULT 'light'"
+    )
+    .execute(pool)
+    .await;
+    
+    match theme_result {
+        Ok(_) => println!("Migration: Added theme column to users"),
+        Err(e) => println!("Migration note: {}", e),
+    }
 }
 
 #[tokio::main]

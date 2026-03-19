@@ -13,6 +13,7 @@ pub struct User {
     pub manager_id: Option<i32>,
     pub language: String,
     pub is_active: bool,
+    pub theme: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

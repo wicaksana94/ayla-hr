@@ -43,6 +43,8 @@ export default function MyLeavePage() {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 5;
 
   const totalDays = selectedRange?.from && selectedRange?.to 
     ? differenceInDays(selectedRange.to, selectedRange.from) + 1 
@@ -123,6 +125,10 @@ export default function MyLeavePage() {
   const getStatusLabel = (status: string) => {
     return t(`myLeave.${status}`) || status;
   };
+
+  // Pagination for leave history
+  const totalHistoryPages = Math.ceil(leaveHistory.length / HISTORY_PAGE_SIZE);
+  const paginatedHistory = leaveHistory.slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -247,21 +253,48 @@ export default function MyLeavePage() {
           ) : leaveHistory.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">{t('myLeave.noHistory')}</p>
           ) : (
-            <div className="space-y-4">
-              {leaveHistory.map((leave) => (
-                <div key={leave.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{getLeaveTypeLabel(leave.leave_type)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {leave.start_date} - {leave.end_date} ({leave.total_days} {t('myLeave.days')})
-                    </p>
+            <>
+              <div className="space-y-4">
+                {paginatedHistory.map((leave) => (
+                  <div key={leave.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{getLeaveTypeLabel(leave.leave_type)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {leave.start_date} - {leave.end_date} ({leave.total_days} {t('myLeave.days')})
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm ${statusColors[leave.status]}`}>
+                      {getStatusLabel(leave.status)}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm ${statusColors[leave.status]}`}>
-                    {getStatusLabel(leave.status)}
-                  </span>
+                ))}
+              </div>
+              {totalHistoryPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Page {historyPage} of {totalHistoryPages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
+                      disabled={historyPage === totalHistoryPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
