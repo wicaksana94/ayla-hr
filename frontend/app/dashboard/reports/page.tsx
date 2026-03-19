@@ -18,6 +18,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -25,15 +27,52 @@ import {
   CheckCircle, 
   XCircle,
   Loader2,
-  Calendar
+  Calendar,
+  Download
 } from "lucide-react";
-import { getLeaves, Leave } from '@/lib/api/leaves';
+import { getLeaves, Leave, getEmployees } from '@/lib/api/leaves';
+import * as XLSX from 'xlsx';
 
 export default function ReportsPage() {
   const { language } = useI18n();
   const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [employees, setEmployees] = useState<{id: number; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Filter leaves by date range
+  const filteredLeaves = leaves.filter(leave => {
+    if (!startDate && !endDate) return true;
+    const leaveStart = new Date(leave.start_date);
+    if (startDate && leaveStart < new Date(startDate)) return false;
+    if (endDate && leaveStart > new Date(endDate)) return false;
+    return true;
+  });
+
+  const getEmployeeName = (userId: number | null) => {
+    if (!userId) return '-';
+    const emp = employees.find(e => e.id === userId);
+    return emp?.name || `User #${userId}`;
+  };
+
+  const handleExportXLSX = () => {
+    const data = filteredLeaves.map(leave => ({
+      'Employee': getEmployeeName(leave.user_id),
+      'Leave Type': leave.leave_type,
+      'Start Date': leave.start_date,
+      'End Date': leave.end_date,
+      'Total Days': leave.total_days,
+      'Reason': leave.reason || '-',
+      'Status': leave.status,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Leave Report');
+    XLSX.writeFile(wb, `leave-report-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
@@ -123,54 +162,72 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    const fetchLeaves = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getLeaves({ page: 1, limit: 100 });
-        setLeaves(data.data);
+        const [leavesData, employeesData] = await Promise.all([
+          getLeaves({ page: 1, limit: 1000 }),
+          getEmployees()
+        ]);
+        setLeaves(leavesData.data);
+        setEmployees(employeesData.map(e => ({ id: e.id, name: e.name })));
       } catch (error) {
-        console.error('Failed to fetch leaves:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchLeaves();
+    fetchData();
   }, []);
 
   // Calculate statistics
   const stats = {
-    total: leaves.length,
-    pending: leaves.filter(l => l.status === 'pending').length,
-    approved: leaves.filter(l => l.status === 'approved').length,
-    rejected: leaves.filter(l => l.status === 'rejected').length,
+    total: filteredLeaves.length,
+    pending: filteredLeaves.filter(l => l.status === 'pending').length,
+    approved: filteredLeaves.filter(l => l.status === 'approved').length,
+    rejected: filteredLeaves.filter(l => l.status === 'rejected').length,
   };
 
-  const totalDays = leaves.reduce((sum, l) => sum + l.total_days, 0);
-  const approvedDays = leaves.filter(l => l.status === 'approved').reduce((sum, l) => sum + l.total_days, 0);
+  const totalDays = filteredLeaves.reduce((sum, l) => sum + l.total_days, 0);
+  const approvedDays = filteredLeaves.filter(l => l.status === 'approved').reduce((sum, l) => sum + l.total_days, 0);
 
   // By leave type
-  const byType = leaves.reduce((acc, l) => {
+  const byType = filteredLeaves.reduce((acc, l) => {
     acc[l.leave_type] = (acc[l.leave_type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
           <p className="text-muted-foreground">{t('reports.subtitle')}</p>
         </div>
         
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('reports.all')}</SelectItem>
-            <SelectItem value="month">{t('reports.thisMonth')}</SelectItem>
-            <SelectItem value="year">{t('reports.thisYear')}</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Input 
+            type="date" 
+            value={startDate} 
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-40"
+            placeholder="Start Date"
+          />
+          <span className="text-muted-foreground">-</span>
+          <Input 
+            type="date" 
+            value={endDate} 
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-40"
+            placeholder="End Date"
+          />
+          <Button variant="outline" onClick={() => { setStartDate(''); setEndDate(''); }}>
+            Clear
+          </Button>
+          <Button onClick={handleExportXLSX} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export XLSX
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -291,12 +348,13 @@ export default function ReportsPage() {
               <CardTitle>{t('reports.recent')}</CardTitle>
             </CardHeader>
             <CardContent>
-              {leaves.length === 0 ? (
+              {filteredLeaves.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">{t('reports.noData')}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Employee</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Dates</TableHead>
                       <TableHead>Days</TableHead>
@@ -304,8 +362,9 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leaves.slice(0, 5).map((leave) => (
+                    {filteredLeaves.slice(0, 10).map((leave) => (
                       <TableRow key={leave.id}>
+                        <TableCell className="font-medium">{getEmployeeName(leave.user_id)}</TableCell>
                         <TableCell className="font-medium capitalize">{leave.leave_type}</TableCell>
                         <TableCell>{leave.start_date} - {leave.end_date}</TableCell>
                         <TableCell>{leave.total_days}</TableCell>

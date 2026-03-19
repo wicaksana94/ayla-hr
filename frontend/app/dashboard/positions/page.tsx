@@ -11,8 +11,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
 
-interface Position { id: number; name: string; department_id: number | null; level: number | null; access_level: string | null; }
+interface Position { id: number; name: string; department_id: number | null; level: string | null; access_level: string | null; }
 interface Department { id: number; name: string; }
+
+const POSITION_LEVELS = [
+  { value: 'staff', label: 'Staff' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'senior_manager', label: 'Senior Manager' },
+];
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
@@ -26,13 +32,13 @@ function PositionsContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [deletingPosition, setDeletingPosition] = useState<Position | null>(null);
-  const [newPosition, setNewPosition] = useState({ name: '', department_id: '' });
+  const [newPosition, setNewPosition] = useState({ name: '', department_id: '', level: '' });
   const [error, setError] = useState<string | null>(null);
 
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
-      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete', confirmDeleteDesc: 'This action cannot be undone.', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department', nameRequired: 'Name is required' }},
-      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus', confirmDeleteDesc: 'Tindakan ini tidak dapat dibatalkan.', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen', nameRequired: 'Nama wajib diisi' }}
+      en: { positions: { title: 'Positions', subtitle: 'Manage positions', addPosition: 'Add Position', search: 'Search...', name: 'Name', department: 'Department', level: 'Level', actions: 'Actions', delete: 'Delete', save: 'Save', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete', confirmDeleteDesc: 'This action cannot be undone.', noResults: 'No positions found', loading: 'Loading...', saving: 'Saving...', selectDept: 'Select Department', selectLevel: 'Select Level', nameRequired: 'Name is required' }},
+      id: { positions: { title: 'Posisi', subtitle: 'Kelola posisi', addPosition: 'Tambah Posisi', search: 'Cari...', name: 'Nama', department: 'Departemen', level: 'Level', actions: 'Aksi', delete: 'Hapus', save: 'Simpan', cancel: 'Batal', confirmDelete: 'Apakah Anda yakin ingin menghapus', confirmDeleteDesc: 'Tindakan ini tidak dapat dibatalkan.', noResults: 'Tidak ada', loading: 'Memuat...', saving: 'Menyimpan...', selectDept: 'Pilih Departemen', selectLevel: 'Pilih Level', nameRequired: 'Nama wajib diisi' }}
     };
     const [category, keyPart] = key.split('.');
     return trans[language]?.[category]?.[keyPart] || key;
@@ -77,15 +83,23 @@ function PositionsContent() {
     if (!newPosition.name.trim()) { setError(t('positions.nameRequired')); return; }
     setIsSaving(true);
     try {
+      // Map level string to number: staff=1, manager=2, senior_manager=3
+      const levelMap: Record<string, number> = { 'staff': 1, 'manager': 2, 'senior_manager': 3 };
+      const level = newPosition.level ? levelMap[newPosition.level] : null;
+      
       const res = await fetch(`${apiUrl}/api/positions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newPosition.name, department_id: newPosition.department_id ? parseInt(newPosition.department_id) : null }),
+        body: JSON.stringify({ 
+          name: newPosition.name, 
+          department_id: newPosition.department_id ? parseInt(newPosition.department_id) : null,
+          level: level
+        }),
       });
       if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.message || `Error: ${res.status}`); }
       await fetchData(); 
       setIsAddDialogOpen(false); 
-      setNewPosition({ name: '', department_id: '' });
+      setNewPosition({ name: '', department_id: '', level: '' });
     } catch (err: any) { setError(err.message); }
     finally { setIsSaving(false); }
   };
@@ -122,6 +136,16 @@ function PositionsContent() {
                   <SelectContent>{departments.map(dept => <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2"><label>{t('positions.level')}</label>
+                <Select value={newPosition.level} onValueChange={(val) => setNewPosition({...newPosition, level: val})}>
+                  <SelectTrigger><SelectValue placeholder={t('positions.selectLevel')} /></SelectTrigger>
+                  <SelectContent>
+                    {POSITION_LEVELS.map(level => (
+                      <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setError(null); }}>{t('positions.cancel')}</Button>
@@ -137,13 +161,16 @@ function PositionsContent() {
 
       <Card><CardContent className="p-0 overflow-x-auto">
         <Table>
-          <TableHeader><TableRow><TableHead>{t('positions.name')}</TableHead><TableHead>{t('positions.department')}</TableHead><TableHead className="text-right">{t('positions.actions')}</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>{t('positions.name')}</TableHead><TableHead>{t('positions.department')}</TableHead><TableHead>{t('positions.level')}</TableHead><TableHead className="text-right">{t('positions.actions')}</TableHead></TableRow></TableHeader>
           <TableBody>
             {positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-              positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pos) => (
-                <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setDeletingPosition(pos)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
-              ))
-            ) : (<TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">{t('positions.noResults')}</TableCell></TableRow>)}
+              positions.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pos) => {
+                const levelMap: Record<string, string> = { '1': 'Staff', '2': 'Manager', '3': 'Senior Manager' };
+                return (
+                  <TableRow key={pos.id}><TableCell className="font-medium">{pos.name}</TableCell><TableCell>{getDeptName(pos.department_id)}</TableCell><TableCell>{pos.level ? levelMap[String(pos.level)] || pos.level : '-'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setDeletingPosition(pos)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                );
+              })
+            ) : (<TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('positions.noResults')}</TableCell></TableRow>)}
           </TableBody>
         </Table>
       </CardContent></Card>

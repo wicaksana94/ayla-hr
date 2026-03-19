@@ -26,8 +26,11 @@ import {
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
-  SelectValue 
+  SelectValue,
+  SelectGroup,
+  SelectLabel 
 } from "@/components/ui/select";
+import { DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Plus, Pencil, Trash2, Search, Loader2, AlertCircle } from 'lucide-react';
 
 interface Employee {
@@ -318,16 +321,36 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <label>{t('employees.manager')}</label>
-                <Select value={newEmployee.manager_id} onValueChange={(val) => setNewEmployee({...newEmployee, manager_id: val})}>
+                <Select value={newEmployee.manager_id} onValueChange={(val) => setNewEmployee({...newEmployee, manager_id: val === 'none' ? '' : val})}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('employees.selectManager')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees
-                      .filter(e => e.id !== parseInt(newEmployee.clerk_id) || !newEmployee.clerk_id)
-                      .map(emp => (
-                      <SelectItem key={emp.id} value={emp.id.toString()}>{emp.name}</SelectItem>
-                    ))}
+                    <SelectItem value="none">{t('employees.noManager') || 'Tanpa Manager'}</SelectItem>
+                    {newEmployee.department_id && (
+                      <>
+                        <SelectLabel>
+                          {departments.find(d => d.id === parseInt(newEmployee.department_id))?.name || 'Managers'}
+                        </SelectLabel>
+                        {employees
+                          .filter(e => e.department_id === parseInt(newEmployee.department_id) && e.id !== parseInt(newEmployee.clerk_id || '0'))
+                          .map(emp => (
+                            <SelectItem key={emp.id} value={emp.id.toString()}>
+                              {emp.name} - {positions.find(p => p.id === emp.position_id)?.name || ''}
+                            </SelectItem>
+                          ))}
+                        {employees.filter(e => e.department_id === parseInt(newEmployee.department_id)).length === 0 && (
+                          <div className="p-2 text-center text-sm text-muted-foreground">
+                            {language === 'id' ? 'Belum ada karyawan di departemen ini' : 'No employees in this department'}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {!newEmployee.department_id && (
+                      <div className="p-2 text-center text-sm text-muted-foreground">
+                        {language === 'id' ? 'Pilih departemen terlebih dahulu' : 'Select department first'}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

@@ -23,6 +23,31 @@ export interface LeaveType {
   is_active: boolean;
 }
 
+export interface Employee {
+  id: number;
+  clerk_id: string;
+  email: string;
+  name: string;
+  role: string;
+  department_id: number | null;
+  position_id: number | null;
+  manager_id: number | null;
+  language: string;
+  is_active: boolean;
+}
+
+export async function getEmployees(): Promise<Employee[]> {
+  const res = await fetch(`${API_BASE}/api/employees`, { 
+    cache: 'no-store' 
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Failed to fetch employees');
+  }
+  const data = await res.json();
+  return data.data || data;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   page: number;

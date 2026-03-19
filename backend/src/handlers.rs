@@ -341,7 +341,7 @@ pub async fn list_leave_types(
     State(pool): State<PgPool>,
 ) -> Json<Vec<LeaveType>> {
     match sqlx::query_as::<_, LeaveType>(
-        "SELECT id, code, is_paid, annual_limit, is_active FROM leave_types WHERE is_active = true"
+        "SELECT id, name, code, is_paid, annual_limit, is_active FROM leave_types WHERE is_active = true"
     )
     .fetch_all(&pool)
     .await

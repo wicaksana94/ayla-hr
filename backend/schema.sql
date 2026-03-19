@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS positions (
 -- ================================
 CREATE TABLE IF NOT EXISTS leave_types (
     id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
     code VARCHAR(50) UNIQUE NOT NULL,
     is_paid BOOLEAN DEFAULT false,
     annual_limit INTEGER DEFAULT 0,

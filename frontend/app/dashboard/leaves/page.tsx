@@ -23,7 +23,7 @@ import {
   FileText,
   Paperclip
 } from "lucide-react";
-import { getLeaves, updateLeaveStatus, Leave, LeaveType } from '@/lib/api/leaves';
+import { getLeaves, updateLeaveStatus, Leave, LeaveType, getEmployees } from '@/lib/api/leaves';
 import { getLeaveTypes } from '@/lib/api/leaves';
 import { useToast } from '@/components/ui/toast';
 
@@ -56,6 +56,7 @@ export default function LeavesPage() {
   const { showToast } = useToast();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
+  const [employees, setEmployees] = useState<{id: number; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
@@ -107,7 +108,17 @@ export default function LeavesPage() {
 
   useEffect(() => {
     fetchLeaveTypes();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const data = await getEmployees();
+      setEmployees(data.map(e => ({ id: e.id, name: e.name })));
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+    }
+  };
 
   useEffect(() => {
     fetchLeaves();
@@ -133,6 +144,12 @@ export default function LeavesPage() {
     return type?.name || code;
   };
 
+  const getEmployeeName = (userId: number | null) => {
+    if (!userId) return '-';
+    const emp = employees.find(e => e.id === userId);
+    return emp?.name || `User #${userId}`;
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
@@ -148,7 +165,7 @@ export default function LeavesPage() {
   };
 
   const columns: Column<Leave>[] = [
-    { key: 'user_id', header: 'Employee', render: (item) => `User #${item.user_id}` },
+    { key: 'user_id', header: 'Employee', render: (item) => getEmployeeName(item.user_id) },
     { key: 'leave_type', header: 'Type', render: (item) => getLeaveTypeName(item.leave_type) },
     { key: 'dates', header: 'Dates', render: (item) => `${item.start_date} - ${item.end_date}` },
     { key: 'total_days', header: 'Days' },
@@ -249,7 +266,7 @@ export default function LeavesPage() {
                 <User className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Employee</p>
-                  <p className="font-medium">User #{selectedLeave.user_id}</p>
+                  <p className="font-medium">{getEmployeeName(selectedLeave.user_id)}</p>
                 </div>
               </div>
 

@@ -115,7 +115,8 @@ export default function MyLeavePage() {
 
   // Get leave type label
   const getLeaveTypeLabel = (code: string) => {
-    return t(`leaveTypes.${code}`) || code;
+    const type = leaveTypes.find(t => t.code === code);
+    return type?.name || t(`leaveTypes.${code}`) || code;
   };
 
   // Get status label
@@ -147,7 +148,7 @@ export default function MyLeavePage() {
                   <SelectContent>
                     {leaveTypes.map((type) => (
                       <SelectItem key={type.code} value={type.code}>
-                        {t(`leaveTypes.${type.code}`)}
+                        {type.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

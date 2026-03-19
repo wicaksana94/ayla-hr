@@ -12,6 +12,56 @@ use tracing_subscriber;
 mod handlers;
 mod models;
 
+async fn run_migrations(pool: &sqlx::PgPool) {
+    // Add name column to leave_types if it doesn't exist
+    let result = sqlx::query(
+        "ALTER TABLE leave_types ADD COLUMN IF NOT EXISTS name VARCHAR(100)"
+    )
+    .execute(pool)
+    .await;
+    
+    match result {
+        Ok(_) => println!("Migration: Added name column to leave_types"),
+        Err(e) => println!("Migration note: {}", e),
+    }
+
+    // Update leave types with names if they don't have names
+    let update_result = sqlx::query(
+        "UPDATE leave_types SET name = CASE 
+            WHEN code = 'annual' THEN 'Cuti Tahunan'
+            WHEN code = 'sick' THEN 'Cuti Sakit'
+            WHEN code = 'maternity' THEN 'Cuti Melahirkan'
+            WHEN code = 'marriage' THEN 'Cuti Pernikahan'
+            WHEN code = 'bereavement' THEN 'Cuti Kematian'
+            WHEN code = 'baptism' THEN 'Cuti Baptis/Sunatan'
+            WHEN code = 'paid_leave' THEN 'Cuti Berbayar'
+            WHEN code = 'unpaid_leave' THEN 'Cuti Tidak Berbayar'
+            WHEN code = 'paid' THEN 'Cuti Dibayar'
+            WHEN code = 'unpaid' THEN 'Cuti Tidak Dibayar'
+            ELSE code
+        END WHERE name IS NULL OR name = ''"
+    )
+    .execute(pool)
+    .await;
+
+    match update_result {
+        Ok(_) => println!("Migration: Updated leave type names"),
+        Err(e) => println!("Migration note: {}", e),
+    }
+
+    // Add level column to positions if it doesn't exist
+    let pos_result = sqlx::query(
+        "ALTER TABLE positions ADD COLUMN IF NOT EXISTS level INTEGER DEFAULT 1"
+    )
+    .execute(pool)
+    .await;
+    
+    match pos_result {
+        Ok(_) => println!("Migration: Added level column to positions"),
+        Err(e) => println!("Migration note: {}", e),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     // Initialize logging
@@ -34,6 +84,9 @@ async fn main() {
         .expect("Failed to create pool");
 
     println!("Connected to database!");
+
+    // Run migrations to fix any schema issues
+    run_migrations(&pool).await;
 
     // CORS configuration - use environment variable for allowed origins
     let allowed_origins_str = env::var("ALLOWED_ORIGINS")
