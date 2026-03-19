@@ -121,36 +121,11 @@ export default function MyLeavePage() {
     return t(`myLeave.${status}`) || status;
   };
 
-  // Get leave balance from API data
-  const getLeaveBalance = (code: string, annualLimit: number, isPaid: boolean) => {
-    if (!isPaid) return '∞';
-    return annualLimit;
-  };
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t('myLeave.title')}</h1>
         <p className="text-muted-foreground">{t('myLeave.subtitle')}</p>
-      </div>
-
-      {/* Leave Balance Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {leaveTypes.slice(0, 4).map((type) => (
-          <Card key={type.code}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{t(`leaveTypes.${type.code}`)}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {getLeaveBalance(type.code, type.annual_limit, type.is_paid)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {type.is_paid ? 'Paid' : 'Unpaid'}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Submit Leave Form */}
