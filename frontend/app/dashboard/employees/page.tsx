@@ -283,12 +283,12 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <label>{t('employees.department')}</label>
-                <Select value={newEmployee.department_id} onValueChange={(val) => setNewEmployee({...newEmployee, department_id: val})}>
+                <Select value={newEmployee.department_id || ''} onValueChange={(val) => setNewEmployee({...newEmployee, department_id: val})}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('employees.selectDepartment')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map(dept => (
+                    {(departments || []).map(dept => (
                       <SelectItem key={dept.id} value={dept.id.toString()}>{dept.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -296,12 +296,12 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <label>{t('employees.position')}</label>
-                <Select value={newEmployee.position_id} onValueChange={(val) => setNewEmployee({...newEmployee, position_id: val})} disabled={!newEmployee.department_id}>
+                <Select value={newEmployee.position_id || ''} onValueChange={(val) => setNewEmployee({...newEmployee, position_id: val})} disabled={!newEmployee.department_id}>
                   <SelectTrigger>
                     <SelectValue placeholder={!newEmployee.department_id ? t('employees.selectDepartmentFirst') : t('employees.selectPosition')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredPositions.length > 0 ? (
+                    {(filteredPositions || []).length > 0 ? (
                       filteredPositions.map(pos => (
                         <SelectItem key={pos.id} value={pos.id.toString()}>{pos.name}</SelectItem>
                       ))
