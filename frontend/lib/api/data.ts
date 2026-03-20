@@ -10,14 +10,18 @@ export interface Employee {
   role: string;
   department_id: number | null;
   position_id: number | null;
+  manager_id: number | null;
   language: string;
   is_active: boolean;
+  theme: string | null;
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
   page: number;
   limit: number;
+  total?: number;
+  totalPages?: number;
 }
 
 export async function getEmployees(params?: {
@@ -56,6 +60,7 @@ export async function createEmployee(data: {
   role?: string;
   department_id?: number;
   position_id?: number;
+  manager_id?: number;
 }): Promise<Employee> {
   const res = await fetch(`${API_BASE}/api/employees`, {
     method: 'POST',
@@ -72,7 +77,9 @@ export async function updateEmployee(id: number, data: Partial<{
   role: string;
   department_id: number;
   position_id: number;
+  manager_id: number;
   is_active: boolean;
+  theme: string;
 }>): Promise<Employee> {
   const res = await fetch(`${API_BASE}/api/employees/${id}`, {
     method: 'PUT',
