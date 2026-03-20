@@ -41,7 +41,7 @@ pub async fn list_employees(
     let query = if params.search.is_some() {
         let search = params.search.unwrap();
         sqlx::query_as::<_, User>(
-            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
+            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme
              FROM users 
              WHERE name LIKE $1 OR email LIKE $1
              ORDER BY name LIMIT $2 OFFSET $3"
@@ -51,7 +51,7 @@ pub async fn list_employees(
         .bind(offset)
     } else {
         sqlx::query_as::<_, User>(
-            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
+            "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme
              FROM users 
              ORDER BY name LIMIT $1 OFFSET $2"
         )
@@ -77,7 +77,7 @@ pub async fn get_employee(
     Path(id): Path<i32>,
 ) -> Result<Json<User>, (StatusCode, String)> {
     match sqlx::query_as::<_, User>(
-        "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active 
+        "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme
          FROM users WHERE id = $1"
     )
     .bind(id)
@@ -107,9 +107,9 @@ pub async fn create_employee(
     let role = payload.role.unwrap_or_else(|| "employee".to_string());
     
     match sqlx::query_as::<_, User>(
-        "INSERT INTO users (clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'en', true)
-         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active"
+        "INSERT INTO users (clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'en', true, 'light')
+         RETURNING id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme"
     )
     .bind(payload.clerk_id)
     .bind(payload.email.trim())
