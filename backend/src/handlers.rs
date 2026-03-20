@@ -43,7 +43,7 @@ pub async fn list_employees(
         sqlx::query_as::<_, User>(
             "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme
              FROM users 
-             WHERE is_active = true AND (name LIKE $1 OR email LIKE $1)
+             WHERE name LIKE $1 OR email LIKE $1
              ORDER BY name LIMIT $2 OFFSET $3"
         )
         .bind(format!("%{}%", search))
@@ -53,7 +53,6 @@ pub async fn list_employees(
         sqlx::query_as::<_, User>(
             "SELECT id, clerk_id, email, name, role, department_id, position_id, manager_id, language, is_active, theme
              FROM users 
-             WHERE is_active = true
              ORDER BY name LIMIT $1 OFFSET $2"
         )
         .bind(limit)
@@ -176,7 +175,7 @@ pub async fn list_departments(
     State(pool): State<PgPool>,
 ) -> Json<Vec<Department>> {
     match sqlx::query_as::<_, Department>(
-        "SELECT id, name, code, is_active FROM departments WHERE is_active = true OR is_active IS NULL ORDER BY name"
+        "SELECT id, name, code, is_active FROM departments ORDER BY name"
     )
     .fetch_all(&pool)
     .await
@@ -277,7 +276,7 @@ pub async fn list_positions(
     let query = if let Some(dept_id) = params.department_id {
         sqlx::query_as::<_, Position>(
             "SELECT id, name, department_id, level, access_level, is_active 
-             FROM positions WHERE department_id = $1 AND (is_active = true OR is_active IS NULL) ORDER BY name LIMIT $2 OFFSET $3"
+             FROM positions WHERE department_id = $1 ORDER BY name LIMIT $2 OFFSET $3"
         )
         .bind(dept_id)
         .bind(limit)
@@ -285,7 +284,7 @@ pub async fn list_positions(
     } else {
         sqlx::query_as::<_, Position>(
             "SELECT id, name, department_id, level, access_level, is_active 
-             FROM positions WHERE is_active = true OR is_active IS NULL ORDER BY name LIMIT $1 OFFSET $2"
+             FROM positions ORDER BY name LIMIT $1 OFFSET $2"
         )
         .bind(limit)
         .bind(offset)

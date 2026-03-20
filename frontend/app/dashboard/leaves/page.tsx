@@ -78,10 +78,10 @@ export default function LeavesPage() {
   const t = (key: string): string => {
     const trans: Record<string, Record<string, Record<string, string>>> = {
       en: {
-        leaves: { title: 'Leave Requests', subtitle: 'Manage employee leave requests', all: 'All' }
+        leaves: { title: 'Leave Requests', subtitle: 'Manage employee leave requests', all: 'All', allLeaveTypes: 'All Types' }
       },
       id: {
-        leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola permintaan cuti karyawan', all: 'Semua' }
+        leaves: { title: 'Permintaan Cuti', subtitle: 'Kelola permintaan cuti karyawan', all: 'Semua', allLeaveTypes: 'Semua Jenis' }
       },
     };
     const [category, keyPart] = key.split('.');
