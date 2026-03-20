@@ -26,6 +26,13 @@ import {
 import { getLeaves, updateLeaveStatus, Leave, LeaveType, getEmployees } from '@/lib/api/leaves';
 import { getLeaveTypes } from '@/lib/api/leaves';
 import { useToast } from '@/components/ui/toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Helper to get proper attachment URL
 const getAttachmentUrl = (attachment: string | null): string | null => {
@@ -59,8 +66,10 @@ export default function LeavesPage() {
   const [employees, setEmployees] = useState<{id: number; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterLeaveType, setFilterLeaveType] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
   const [total, setTotal] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [processingId, setProcessingId] = useState<number | null>(null);
@@ -82,8 +91,9 @@ export default function LeavesPage() {
   const fetchLeaves = async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 10 };
+      const params: any = { page, limit };
       if (filterStatus !== 'all') params.status = filterStatus;
+      if (filterLeaveType !== 'all') params.leave_type = filterLeaveType;
       if (search) params.search = search;
       
       const data = await getLeaves(params);
@@ -122,7 +132,7 @@ export default function LeavesPage() {
 
   useEffect(() => {
     fetchLeaves();
-  }, [filterStatus, page, search]);
+  }, [filterStatus, filterLeaveType, page, search, limit]);
 
   const handleStatusUpdate = async (id: number, newStatus: 'approved' | 'rejected') => {
     setProcessingId(id);
@@ -154,6 +164,11 @@ export default function LeavesPage() {
     setPage(newPage);
   };
 
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to first page when limit changes
+  };
+
   const handleSearch = (searchValue: string) => {
     setSearch(searchValue);
     setPage(1); // Reset to first page on search
@@ -161,6 +176,11 @@ export default function LeavesPage() {
 
   const handleFilterChange = (value: string) => {
     setFilterStatus(value);
+    setPage(1); // Reset to first page on filter
+  };
+
+  const handleLeaveTypeFilterChange = (value: string) => {
+    setFilterLeaveType(value);
     setPage(1); // Reset to first page on filter
   };
 
@@ -188,6 +208,11 @@ export default function LeavesPage() {
     { value: 'rejected', label: statusLabels[language]?.rejected || 'Rejected' },
   ];
 
+  const leaveTypeFilterOptions = [
+    { value: 'all', label: t('leaves.allLeaveTypes') || 'All Types' },
+    ...leaveTypes.map(lt => ({ value: lt.code, label: lt.name })),
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -197,6 +222,25 @@ export default function LeavesPage() {
 
       <Card>
         <CardContent className="p-6">
+          {/* Leave Type Filter */}
+          <div className="mb-4 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Type:</span>
+              <Select value={filterLeaveType} onValueChange={handleLeaveTypeFilterChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  {leaveTypeFilterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <DataTable
             columns={columns}
             data={leaves}
@@ -204,11 +248,12 @@ export default function LeavesPage() {
             page={page}
             totalPages={totalPages}
             total={total}
-            limit={10}
+            limit={limit}
             searchPlaceholder="Search by reason or type..."
             filterOptions={filterOptions}
             filterValue={filterStatus}
             onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
             onSearch={handleSearch}
             onFilterChange={handleFilterChange}
             onRowClick={(item) => setSelectedLeave(item)}

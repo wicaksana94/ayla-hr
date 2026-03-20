@@ -43,6 +43,7 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
   onSearch?: (search: string) => void;
   onFilterChange?: (filter: string) => void;
+  onLimitChange?: (limit: number) => void;
   filterOptions?: { value: string; label: string }[];
   filterValue?: string;
   onRowClick?: (item: T) => void;
@@ -61,6 +62,7 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onSearch,
   onFilterChange,
+  onLimitChange,
   filterOptions,
   filterValue,
   onRowClick,
@@ -177,10 +179,30 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {totalPages >= 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {startItem} to {endItem} of {total} results
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {startItem} to {endItem} of {total} results
+            </div>
+            {/* Limit Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <Select 
+                value={String(limit)} 
+                onValueChange={(value) => onLimitChange?.(parseInt(value))}
+              >
+                <SelectTrigger className="w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">

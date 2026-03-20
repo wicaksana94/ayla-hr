@@ -55,6 +55,7 @@ export default function DepartmentsPage() {
     setError(null);
     if (!newDepartment.name.trim()) { setError(t('departments.nameRequired')); return; }
     if (!newDepartment.code.trim()) { setError(t('departments.codeRequired')); return; }
+    if (newDepartment.code.trim().length > 3) { setError(language === 'id' ? 'Kode maksimal 3 karakter' : 'Code must be maximum 3 characters'); return; }
 
     setIsSaving(true);
     try {
@@ -75,6 +76,7 @@ export default function DepartmentsPage() {
     if (!editingDepartment) return;
     setError(null);
     if (!editingDepartment.name.trim() || !editingDepartment.code?.trim()) { setError(t('departments.nameRequired')); return; }
+    if (editingDepartment.code.trim().length > 3) { setError(language === 'id' ? 'Kode maksimal 3 karakter' : 'Code must be maximum 3 characters'); return; }
     setIsSaving(true);
     try {
       const res = await fetch(`${apiUrl}/api/departments/${editingDepartment.id}`, { 
@@ -115,7 +117,7 @@ export default function DepartmentsPage() {
             <div className="space-y-4 py-4">
               {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
               <div className="space-y-2"><label>{t('departments.name')}</label><Input value={newDepartment.name} onChange={(e) => setNewDepartment({...newDepartment, name: e.target.value})} placeholder="Human Resources" /></div>
-              <div className="space-y-2"><label>{t('departments.code')}</label><Input value={newDepartment.code} onChange={(e) => setNewDepartment({...newDepartment, code: e.target.value})} placeholder="HR" /></div>
+              <div className="space-y-2"><label>{t('departments.code')}</label><Input value={newDepartment.code} onChange={(e) => setNewDepartment({...newDepartment, code: e.target.value.toUpperCase()})} placeholder="HR" maxLength={3} /></div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setError(null); }}>{t('departments.cancel')}</Button>
@@ -149,7 +151,7 @@ export default function DepartmentsPage() {
           {editingDepartment && <div className="space-y-4 py-4">
             {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
             <div className="space-y-2"><label>{t('departments.name')}</label><Input value={editingDepartment.name} onChange={(e) => setEditingDepartment({...editingDepartment, name: e.target.value})} /></div>
-            <div className="space-y-2"><label>{t('departments.code')}</label><Input value={editingDepartment.code || ''} onChange={(e) => setEditingDepartment({...editingDepartment, code: e.target.value})} /></div>
+            <div className="space-y-2"><label>{t('departments.code')}</label><Input value={editingDepartment.code || ''} onChange={(e) => setEditingDepartment({...editingDepartment, code: e.target.value.toUpperCase()})} maxLength={3} /></div>
           </div>}
           <DialogFooter><Button variant="outline" onClick={() => { setEditingDepartment(null); setError(null); }}>{t('departments.cancel')}</Button><Button onClick={handleEdit} disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('departments.save')}</Button></DialogFooter>
         </DialogContent>

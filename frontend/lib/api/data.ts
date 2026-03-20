@@ -103,6 +103,7 @@ export interface Department {
   id: number;
   name: string;
   code: string | null;
+  is_active?: boolean | null;
 }
 
 export async function getDepartments(): Promise<Department[]> {
@@ -154,6 +155,7 @@ export interface Position {
   department_id: number | null;
   level: number | null;
   access_level: string | null;
+  is_active?: boolean | null;
 }
 
 export async function getPositions(params?: {

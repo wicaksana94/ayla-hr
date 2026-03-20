@@ -21,6 +21,7 @@ pub struct Department {
     pub id: i32,
     pub name: String,
     pub code: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -30,6 +31,7 @@ pub struct Position {
     pub department_id: Option<i32>,
     pub level: Option<i32>,
     pub access_level: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -270,6 +272,15 @@ pub struct UpdateEmployeeRequest {
 pub struct CreateDepartmentRequest {
     pub name: String,
     pub code: String,
+}
+
+impl CreateDepartmentRequest {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.code.trim().len() > 3 {
+            return Err("Department code must be maximum 3 characters".to_string());
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize)]
