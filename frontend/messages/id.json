@@ -63,7 +63,8 @@
   },
   "leaves": {
     "title": "Permintaan Cuti",
-    "all": "Semua"
+    "all": "Semua",
+    "allLeaveTypes": "Semua Jenis"
   },
   "positions": {
     "edit": "Edit"

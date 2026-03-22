@@ -31,7 +31,6 @@ pub struct Position {
     pub department_id: Option<i32>,
     pub level: Option<i32>,
     pub access_level: Option<String>,
-    pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

@@ -21,6 +21,13 @@ import {
   Loader2,
   Download
 } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { getLeaves, Leave, getEmployees } from '@/lib/api/leaves';
 import * as XLSX from 'xlsx';
 
@@ -32,6 +39,7 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reportPage, setReportPage] = useState(1);
+  const [reportLimit, setReportLimit] = useState(5);
   const REPORT_PAGE_SIZE = 5;
 
   const t = (key: string): string => {
@@ -53,7 +61,11 @@ export default function ReportsPage() {
           all: 'All Time',
           thisMonth: 'This Month',
           thisYear: 'This Year',
-          noData: 'No data available'
+          noData: 'No data available',
+          startDate: 'Start Date',
+          endDate: 'End Date',
+          clear: 'Clear',
+          itemsPerPage: 'Show'
         } 
       },
       id: { 
@@ -73,7 +85,11 @@ export default function ReportsPage() {
           all: 'Semua Waktu',
           thisMonth: 'Bulan Ini',
           thisYear: 'Tahun Ini',
-          noData: 'Tidak ada data'
+          noData: 'Tidak ada data',
+          startDate: 'Tanggal Mulai',
+          endDate: 'Tanggal Akhir',
+          clear: 'Hapus',
+          itemsPerPage: 'Tampilkan'
         } 
       },
     };
@@ -149,8 +165,8 @@ export default function ReportsPage() {
   }, {} as Record<string, number>);
 
   // Pagination
-  const totalReportPages = Math.ceil(filteredLeaves.length / REPORT_PAGE_SIZE);
-  const paginatedLeaves = filteredLeaves.slice((reportPage - 1) * REPORT_PAGE_SIZE, reportPage * REPORT_PAGE_SIZE);
+  const totalReportPages = Math.ceil(filteredLeaves.length / reportLimit);
+  const paginatedLeaves = filteredLeaves.slice((reportPage - 1) * reportLimit, reportPage * reportLimit);
 
   return (
     <div className="space-y-6">
@@ -161,23 +177,27 @@ export default function ReportsPage() {
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
-          <Input 
-            type="date" 
-            value={startDate} 
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-40"
-            placeholder="Start date"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t('reports.startDate')}:</span>
+            <Input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-40"
+            />
+          </div>
           <span className="text-muted-foreground">-</span>
-          <Input 
-            type="date" 
-            value={endDate} 
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-40"
-            placeholder="End date"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t('reports.endDate')}:</span>
+            <Input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-40"
+            />
+          </div>
           <Button variant="outline" onClick={() => { setStartDate(''); setEndDate(''); }}>
-            Clear
+            {t('reports.clear')}
           </Button>
           <Button onClick={handleExportXLSX} className="gap-2">
             <Download className="h-4 w-4" />
@@ -340,10 +360,29 @@ export default function ReportsPage() {
                   </Table>
                   
                   {/* Pagination */}
-                  {totalReportPages > 1 && (
+                  {totalReportPages >= 1 && (
                     <div className="flex items-center justify-between py-4">
-                      <div className="text-sm text-muted-foreground">
-                        Page {reportPage} of {totalReportPages}
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground">
+                          Page {reportPage} of {totalReportPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">{t('reports.itemsPerPage')}:</span>
+                          <Select 
+                            value={String(reportLimit)} 
+                            onValueChange={(value) => { setReportLimit(parseInt(value)); setReportPage(1); }}
+                          >
+                            <SelectTrigger className="w-20 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5</SelectItem>
+                              <SelectItem value="10">10</SelectItem>
+                              <SelectItem value="20">20</SelectItem>
+                              <SelectItem value="50">50</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button

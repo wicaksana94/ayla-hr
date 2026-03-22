@@ -275,7 +275,7 @@ pub async fn list_positions(
 
     let query = if let Some(dept_id) = params.department_id {
         sqlx::query_as::<_, Position>(
-            "SELECT id, name, department_id, level, access_level, is_active 
+            "SELECT id, name, department_id, level, access_level
              FROM positions WHERE department_id = $1 ORDER BY name LIMIT $2 OFFSET $3"
         )
         .bind(dept_id)
@@ -283,7 +283,7 @@ pub async fn list_positions(
         .bind(offset)
     } else {
         sqlx::query_as::<_, Position>(
-            "SELECT id, name, department_id, level, access_level, is_active 
+            "SELECT id, name, department_id, level, access_level
              FROM positions ORDER BY name LIMIT $1 OFFSET $2"
         )
         .bind(limit)
@@ -333,13 +333,13 @@ pub async fn delete_position(
     State(pool): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    // Soft delete - set is_active to false
-    match sqlx::query("UPDATE positions SET is_active = false WHERE id = $1")
+    // Hard delete since is_active column may not exist in all deployments
+    match sqlx::query("DELETE FROM positions WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
     {
-        Ok(_) => Ok(Json(serde_json::json!({"success": true, "message": "Position deactivated (soft delete)"}))),
+        Ok(_) => Ok(Json(serde_json::json!({"success": true, "message": "Position deleted"}))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

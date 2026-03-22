@@ -63,7 +63,8 @@
   },
   "leaves": {
     "title": "Leave Requests",
-    "all": "All"
+    "all": "All",
+    "allLeaveTypes": "All Types"
   },
   "positions": {
     "edit": "Edit"

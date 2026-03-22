@@ -44,6 +44,7 @@ export default function MyLeavePage() {
   const [loading, setLoading] = useState(true);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
+  const [historyLimit, setHistoryLimit] = useState(5);
   const HISTORY_PAGE_SIZE = 5;
 
   const totalDays = selectedRange?.from && selectedRange?.to 
@@ -127,8 +128,8 @@ export default function MyLeavePage() {
   };
 
   // Pagination for leave history
-  const totalHistoryPages = Math.ceil(leaveHistory.length / HISTORY_PAGE_SIZE);
-  const paginatedHistory = leaveHistory.slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE);
+  const totalHistoryPages = Math.ceil(leaveHistory.length / historyLimit);
+  const paginatedHistory = leaveHistory.slice((historyPage - 1) * historyLimit, historyPage * historyLimit);
 
   return (
     <div className="space-y-6">
@@ -269,10 +270,28 @@ export default function MyLeavePage() {
                   </div>
                 ))}
               </div>
-              {totalHistoryPages > 1 && (
+              {totalHistoryPages >= 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Page {historyPage} of {totalHistoryPages}
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-muted-foreground">
+                      Page {historyPage} of {totalHistoryPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Show:</span>
+                      <Select 
+                        value={String(historyLimit)} 
+                        onValueChange={(value) => { setHistoryLimit(parseInt(value)); setHistoryPage(1); }}
+                      >
+                        <SelectTrigger className="w-20 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
